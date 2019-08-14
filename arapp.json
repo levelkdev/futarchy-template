@@ -1,0 +1,11 @@
+{
+  "environments": {
+    "development": {
+      "registry": "0xc43d6f54bcf3e58981c175b135ffc8c035547f3b",
+      "appName": "futarchy-kit.aragonpm.eth",
+      "address": "0x52ff2aa36438a796dba3029150802f4cc5fed96c",
+      "network": "development"
+    }
+  },
+  "path": "contracts/FutarchyKit.sol"
+}

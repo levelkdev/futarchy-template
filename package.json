@@ -1,0 +1,43 @@
+{
+  "name": "futarchy-kit",
+  "version": "1.0.0",
+  "description": "Kit for futarchy DAOs",
+  "main": "index.js",
+  "scripts": {
+    "cleanup": "rm -rf build/ && mkdir build",
+    "compile": "npm run cleanup && truffle compile --all",
+    "deploy:development": "truffle exec --network development scripts/deploy.js",
+    "ganache": "scripts/ganache.sh"
+  },
+  "files": [
+    "build/",
+    "contracts/",
+    "scripts/",
+    "truffle.js",
+    "test/"
+  ],
+  "author": "Aragon Association <legal@aragon.org>",
+  "license": "GPL-3.0-or-later",
+  "devDependencies": {
+    "@aragon/id": "^2.0.3",
+    "babel-polyfill": "^6.26.0",
+    "babel-register": "^6.26.0",
+    "dotenv": "^8.0.0",
+    "eth-ens-namehash": "^2.0.8",
+    "ganache-cli": "6.5.1",
+    "truffle": "4.1.14",
+    "truffle-extract": "1.2.1",
+    "truffle-hdwallet-provider": "0.0.3"
+  },
+  "dependencies": {
+    "@aragon/os": "^4.2.0",
+    "@aragon/apps-shared-minime": "^1.0.0",
+    "@aragon/apps-shared-migrations": "^1.0.0",
+    "@aragon/apps-voting": "^2.1.0",
+    "@aragon/apps-vault": "^4.1.0",
+    "@aragon/apps-finance": "^3.0.0",
+    "@aragon/apps-token-manager": "^2.1.0",
+    "@aragon/kits-base": "^1.0.0",
+    "@aragon/kits-beta-base": "^1.0.0"
+  }
+}
