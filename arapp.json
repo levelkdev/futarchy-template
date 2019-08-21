@@ -1,11 +1,11 @@
 {
   "environments": {
-    "development": {
-      "registry": "0xc43d6f54bcf3e58981c175b135ffc8c035547f3b",
-      "appName": "futarchy-kit.aragonpm.eth",
-      "address": "0x52ff2aa36438a796dba3029150802f4cc5fed96c",
-      "network": "development"
+    "default": {
+      "appName": "futarchy-template.aragonpm.eth",
+      "network": "rpc",
+      "registry": "0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1"
     }
   },
-  "path": "contracts/FutarchyKit.sol"
+  "roles": [],
+  "path": "contracts/FutarchyTemplate.sol"
 }

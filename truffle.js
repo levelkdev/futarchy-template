@@ -51,9 +51,9 @@ module.exports = {
       gas: 6900000,
       gasPrice: 30 * 10 ** 9,
     },
-    development: {
+    rpc: {
       host: 'localhost',
-      port: 8546,
+      port: 8545,
       network_id: '*',
       gas: 6900000,
       gasPrice: 15 * 10 ** 9,
@@ -62,6 +62,12 @@ module.exports = {
   compilers: {
     solc: {
       version: '0.4.24' // Fetch exact version from solc-bin (default: truffle's version)
+    }
+  },
+  solc: {
+    optimizer: {
+      enabled: true,
+      runs: 10000
     }
   }
 }

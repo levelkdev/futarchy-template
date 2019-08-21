@@ -1,25 +1,26 @@
 {
-  "name": "futarchy-kit",
+  "name": "futarchy-template",
   "version": "1.0.0",
-  "description": "Kit for futarchy DAOs",
+  "description": "Template for futarchy DAOs",
   "main": "index.js",
   "scripts": {
-    "cleanup": "rm -rf build/ && mkdir build",
-    "compile": "npm run cleanup && truffle compile --all",
-    "deploy:development": "truffle exec --network development scripts/deploy.js",
-    "ganache": "scripts/ganache.sh"
+    "prepublishOnly": "npm run compile && npm run abi:extract -- --no-compile",
+    "abi:extract": "truffle-extract --output abi/ --keys abi",
+    "compile": "truffle compile --all",
+    "deploy:rpc": "npm run compile && truffle exec ./scripts/deploy.js --network rpc",
+    "publish:rpc": "aragon apm publish major $(npm run deploy:rpc | tail -n 1) --environment default"
   },
   "files": [
+    "abi/",
     "build/",
     "contracts/",
     "scripts/",
     "truffle.js",
     "test/"
   ],
-  "author": "Aragon Association <legal@aragon.org>",
+  "author": "Level K",
   "license": "GPL-3.0-or-later",
   "devDependencies": {
-    "@aragon/id": "^2.0.3",
     "babel-polyfill": "^6.26.0",
     "babel-register": "^6.26.0",
     "dotenv": "^8.0.0",
@@ -30,14 +31,15 @@
     "truffle-hdwallet-provider": "0.0.3"
   },
   "dependencies": {
-    "@aragon/os": "^4.2.0",
-    "@aragon/apps-shared-minime": "^1.0.0",
-    "@aragon/apps-shared-migrations": "^1.0.0",
-    "@aragon/apps-voting": "^2.1.0",
-    "@aragon/apps-vault": "^4.1.0",
+    "@aragon/apps-agent": "^1.0.0",
     "@aragon/apps-finance": "^3.0.0",
+    "@aragon/apps-payroll": "^1.0.0-rc.1",
+    "@aragon/apps-shared-minime": "^1.0.0",
     "@aragon/apps-token-manager": "^2.1.0",
-    "@aragon/kits-base": "^1.0.0",
-    "@aragon/kits-beta-base": "^1.0.0"
+    "@aragon/apps-vault": "^4.1.0",
+    "@aragon/apps-voting": "^2.1.0",
+    "@aragon/id": "2.0.3",
+    "@aragon/os": "4.2.0",
+    "@aragon/templates-shared": "^1.0.0-rc.1"
   }
 }

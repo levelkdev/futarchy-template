@@ -1,31 +1,13 @@
-require('dotenv').config()
-const deploy_ens = require('@aragon/os/scripts/deploy-test-ens.js')
-const deploy_apm = require('@aragon/os/scripts/deploy-apm.js')
-const deploy_id = require('@aragon/id/scripts/deploy-beta-aragonid.js')
-const deploy_kit = require('@aragon/kits-beta-base/scripts/deploy_kit.js')
+const deployTemplate = require('@aragon/templates-shared/scripts/deploy-template')
 
-module.exports = async (callback) => {
-  try {
-    const owner = process.env.OWNER
+const TEMPLATE_NAME = 'futarchy-template'
+const CONTRACT_NAME = 'FutarchyTemplate'
 
-    console.log(`Deploying Democracy Kit, Owner ${owner}`)
-
-    // get network
-    const network = process.argv[4]
-
-    // ENS
-    const { ens } = await deploy_ens(null, { artifacts, web3, owner })
-
-    // APM
-    await deploy_apm(null, {artifacts, web3, owner, ensAddress: ens.address })
-
-    // aragonID
-    await deploy_id(null, { artifacts, web3, owner, ensAddress: ens.address })
-
-    await deploy_kit(null, { artifacts, owner, kitName: 'futarchy-kit', kitContractName: 'FutarchyKit', network: network, ensAddress: ens.address })
-
-    callback()
-  } catch (err) {
-    console.log('Error in scripts/deploy.js: ', err)
-  }
+module.exports = callback => {
+  deployTemplate(web3, artifacts, TEMPLATE_NAME, CONTRACT_NAME)
+    .then(template => {
+      console.log(template.address)
+      callback()
+    })
+    .catch(callback)
 }
