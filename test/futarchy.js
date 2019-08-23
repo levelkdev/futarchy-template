@@ -1,3 +1,5 @@
+const assertRevert = require('@aragon/templates-shared/helpers/assertRevert')(web3)
+
 const { hash: namehash } = require('eth-ens-namehash')
 const { randomId } = require('@aragon/templates-shared/helpers/aragonId')
 const { getEventArgument } = require('@aragon/test-helpers/events')
@@ -108,16 +110,28 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
     })
   }
 
-  const createDAO = () => {
-    before('create company entity', async () => {
-      daoID = randomId()
-      receipt = await template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, daoID, HOLDERS, STAKES, VOTING_SETTINGS, { from: owner })
-      await loadDAO(receipt, receipt)
-    })
-  }
-
   context('creating instances with a single transaction', () => {
-    createDAO()
-    testDAOSetup()
+    context('when the creation fails', () => {
+      it('reverts when no holders were given', async () => {
+        await assertRevert(template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, randomId(), [], [], VOTING_SETTINGS), 'COMPANY_EMPTY_HOLDERS')
+      })
+
+      it('reverts when holders and stakes length do not match', async () => {
+        await assertRevert(template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, randomId(), [holder1], STAKES, VOTING_SETTINGS), 'COMPANY_BAD_HOLDERS_STAKES_LEN')
+        await assertRevert(template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, randomId(), HOLDERS, [1e18], VOTING_SETTINGS), 'COMPANY_BAD_HOLDERS_STAKES_LEN')
+      })
+    })
+
+    context('when the creation succeeds', () => {
+      let receipt
+
+      before('create futarchy', async () => {
+        daoID = randomId()
+        receipt = await template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, daoID, HOLDERS, STAKES, VOTING_SETTINGS, { from: owner })
+        await loadDAO(receipt, receipt)
+      })
+
+      testDAOSetup()
+    })
   })
 })
