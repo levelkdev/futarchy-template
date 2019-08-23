@@ -14,6 +14,7 @@ const Voting = artifacts.require('Voting')
 const TokenManager = artifacts.require('TokenManager')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const PublicResolver = artifacts.require('PublicResolver')
+const EVMScriptRegistry = artifacts.require('EVMScriptRegistry')
 
 const ONE_DAY = 60 * 60 * 24
 const ONE_WEEK = ONE_DAY * 7
@@ -93,6 +94,17 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
       await assertMissingRole(acl, tokenManager, 'ISSUE_ROLE')
       await assertMissingRole(acl, tokenManager, 'ASSIGN_ROLE')
       await assertMissingRole(acl, tokenManager, 'REVOKE_VESTINGS_ROLE')
+    })
+
+    it('sets up DAO and ACL permissions correctly', async () => {
+      await assertRole(acl, dao, voting, 'APP_MANAGER_ROLE')
+      await assertRole(acl, acl, voting, 'CREATE_PERMISSIONS_ROLE')
+    })
+
+    it('sets up EVM scripts registry permissions correctly', async () => {
+      const reg = await EVMScriptRegistry.at(await acl.getEVMScriptRegistry())
+      await assertRole(acl, reg, voting, 'REGISTRY_ADD_EXECUTOR_ROLE')
+      await assertRole(acl, reg, voting, 'REGISTRY_MANAGER_ROLE')
     })
   }
 
