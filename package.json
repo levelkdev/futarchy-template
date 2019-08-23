@@ -8,7 +8,9 @@
     "abi:extract": "truffle-extract --output abi/ --keys abi",
     "compile": "truffle compile --all",
     "deploy:rpc": "npm run compile && truffle exec ./scripts/deploy.js --network rpc",
-    "publish:rpc": "aragon apm publish major $(npm run deploy:rpc | tail -n 1) --environment default"
+    "publish:rpc": "aragon apm publish major $(npm run deploy:rpc | tail -n 1) --environment default",
+    "test": "npm run test:ganache",
+    "test:ganache": "./node_modules/@aragon/templates-shared/scripts/test-ganache.sh"
   },
   "files": [
     "abi/",
@@ -21,6 +23,7 @@
   "author": "Level K",
   "license": "GPL-3.0-or-later",
   "devDependencies": {
+    "@aragon/test-helpers": "^2.0.0",
     "babel-polyfill": "^6.26.0",
     "babel-register": "^6.26.0",
     "dotenv": "^8.0.0",
@@ -28,7 +31,8 @@
     "ganache-cli": "6.5.1",
     "truffle": "4.1.14",
     "truffle-extract": "1.2.1",
-    "truffle-hdwallet-provider": "0.0.3"
+    "truffle-hdwallet-provider": "0.0.3",
+    "web3-eth-abi": "^1.2.0"
   },
   "dependencies": {
     "@aragon/apps-agent": "^1.0.0",
