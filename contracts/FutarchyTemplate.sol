@@ -1,9 +1,12 @@
 pragma solidity 0.4.24;
 
+import "futarchy-app/contracts/Futarchy.sol";
 import "@aragon/templates-shared/contracts/TokenCache.sol";
 import "@aragon/templates-shared/contracts/BaseTemplate.sol";
 
 contract FutarchyTemplate is BaseTemplate, TokenCache {
+  bytes32 constant internal FUTARCHY_APP_ID = 0xe1103655b21eaf74209e26bc58ee715bc639ce36e18741f2ce83d3210a785186;
+
   string constant private ERROR_EMPTY_HOLDERS = "COMPANY_EMPTY_HOLDERS";
   string constant private ERROR_BAD_HOLDERS_STAKES_LEN = "COMPANY_BAD_HOLDERS_STAKES_LEN";
   string constant private ERROR_BAD_VOTE_SETTINGS = "COMPANY_BAD_VOTE_SETTINGS";
@@ -33,19 +36,21 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
   * @param _holders Array of token holder addresses
   * @param _stakes Array of token stakes for holders (token has 18 decimals, multiply token amount `* 10^18`)
   * @param _votingSettings Array of [supportRequired, minAcceptanceQuorum, voteDuration] to set up the voting app of the organization
+  * @param _futarchySettings Array of [futarchyFee, futarchyTradingPeriod, futarchyTimeToPriceResolution, futarchyMarketFundAmount, futarchyToken, futarchyOracleFactory, priceOracleFactory, lmsrMarketMaker] to set up the futarchy app of the organization
   */
   function newTokenAndInstance(
-      string _tokenName,
-      string _tokenSymbol,
-      string _id,
-      address[] _holders,
-      uint256[] _stakes,
-      uint64[3] _votingSettings
+    string _tokenName,
+    string _tokenSymbol,
+    string _id,
+    address[] _holders,
+    uint256[] _stakes,
+    uint64[3] _votingSettings,
+    bytes32[8] _futarchySettings
   )
-      external
+    external
   {
-      newToken(_tokenName, _tokenSymbol);
-      newInstance(_id, _holders, _stakes, _votingSettings);
+    newToken(_tokenName, _tokenSymbol);
+    newInstance(_id, _holders, _stakes, _votingSettings, _futarchySettings);
   }
 
   /**
@@ -54,19 +59,24 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
   * @param _holders Array of token holder addresses
   * @param _stakes Array of token stakes for holders (token has 18 decimals, multiply token amount `* 10^18`)
   * @param _votingSettings Array of [supportRequired, minAcceptanceQuorum, voteDuration] to set up the voting app of the organization
+  * @param _futarchySettings Array of [futarchyFee, futarchyTradingPeriod, futarchyTimeToPriceResolution, futarchyMarketFundAmount, futarchyToken, futarchyOracleFactory, priceOracleFactory, lmsrMarketMaker] to set up the futarchy app of the organization
   */
   function newInstance(
     string memory _id,
     address[] memory _holders,
     uint256[] memory _stakes,
-    uint64[3] memory _votingSettings
+    uint64[3] memory _votingSettings,
+    bytes32[8] memory _futarchySettings
   )
     public
   {
-    _ensureFutarchySettings(_holders, _stakes, _votingSettings);
+    _ensureSettings(_holders, _stakes, _votingSettings, _futarchySettings);
 
     (Kernel dao, ACL acl) = _createDAO();
-    (, Voting voting) = _setupApps(dao, acl, _holders, _stakes, _votingSettings);
+    Voting voting = _setupBaseApps(dao, acl, _holders, _stakes, _votingSettings);
+
+    _setupFutarchyApp(dao, acl, voting, _futarchySettings);
+
     _transferRootPermissionsFromTemplateAndFinalizeDAO(dao, voting);
     _registerID(_id, dao);
   }
@@ -82,7 +92,7 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
     return token;
   }
 
-  function _setupApps(
+  function _setupBaseApps(
     Kernel _dao,
     ACL _acl,
     address[] memory _holders,
@@ -97,27 +107,63 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
     Voting voting = _installVotingApp(_dao, token, _votingSettings);
 
     _mintTokens(_acl, tokenManager, _holders, _stakes);
-    _setupPermissions(_acl, voting, tokenManager);
+    
+    _createEvmScriptsRegistryPermissions(_acl, voting, voting);
+    _createVotingPermissions(_acl, voting, voting, tokenManager, voting);
+    _createTokenManagerPermissions(_acl, tokenManager, voting, voting);
 
     return voting;
   }
 
-  function _setupPermissions(
+  function _setupFutarchyApp(
+    Kernel _dao,
     ACL _acl,
     Voting _voting,
-    TokenManager _tokenManager
+    bytes32[8] _futarchySettings
   )
     internal
   {
-    _createEvmScriptsRegistryPermissions(_acl, _voting, _voting);
-    _createVotingPermissions(_acl, _voting, _voting, _tokenManager, _voting);
-    _createTokenManagerPermissions(_acl, _tokenManager, _voting, _voting);
+    Futarchy futarchy = _installFutarchyApp(_dao, _futarchySettings);
+    // _createFutarchyPermissions(_acl, futarchy, _voting, _voting);
   }
 
-  function _ensureFutarchySettings(
+  function _installFutarchyApp(
+    Kernel _dao,
+    bytes32[8] _futarchySettings
+  )
+    internal
+    returns (Futarchy)
+  {
+    uint24 _futarchyFee = uint24(_futarchySettings[0]);
+    uint _futarchyTradingPeriod = uint(_futarchySettings[1]);
+    uint _futarchyTimeToPriceResolution = uint(_futarchySettings[2]);
+    uint _futarchyMarketFundAmount = uint(_futarchySettings[3]);
+    address _futarchyToken = address(_futarchySettings[4]);
+    address _futarchyOracleFactory = address(_futarchySettings[5]);
+    address _priceOracleFactory = address(_futarchySettings[6]);
+    address _lmsrMarketMaker = address(_futarchySettings[7]);
+
+    bytes memory initializeData = abi.encodeWithSelector(Futarchy(0).initialize.selector, _futarchyFee, _futarchyTradingPeriod, _futarchyTimeToPriceResolution, _futarchyMarketFundAmount, ERC20Gnosis(_futarchyToken), FutarchyOracleFactory(_futarchyOracleFactory), IScalarPriceOracleFactory(_priceOracleFactory), LMSRMarketMaker(_lmsrMarketMaker));
+
+    return Futarchy(_installNonDefaultApp(_dao, FUTARCHY_APP_ID, initializeData));
+  }
+
+  function _createFutarchyPermissions(
+    ACL _acl,
+    Futarchy _futarchy,
+    address _grantee,
+    address _manager
+  )
+    internal
+  {
+    _acl.createPermission(_grantee, _futarchy, _futarchy.CREATE_DECISION_ROLE(), _manager);
+  }
+
+  function _ensureSettings(
     address[] memory _holders,
     uint256[] memory _stakes,
-    uint64[3] memory _votingSettings
+    uint64[3] memory _votingSettings,
+    bytes32[8] memory _futarchySettings
   )
     private
     pure
@@ -125,5 +171,6 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
     require(_holders.length > 0, ERROR_EMPTY_HOLDERS);
     require(_holders.length == _stakes.length, ERROR_BAD_HOLDERS_STAKES_LEN);
     require(_votingSettings.length == 3, ERROR_BAD_VOTE_SETTINGS);
+    // TODO: verify futarchy settings
   }
 }
