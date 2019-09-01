@@ -7,10 +7,10 @@
     "prepublishOnly": "npm run compile && npm run abi:extract -- --no-compile",
     "abi:extract": "truffle-extract --output abi/ --keys abi",
     "compile": "truffle compile --all",
-    "deploy:rpc": "npm run compile && truffle exec ./scripts/deploy.js --network rpc",
+    "deploy:rpc": "npm run compile && truffle exec ./scripts/deploy.js --network rpc --verbose true",
     "publish:rpc": "aragon apm publish major $(npm run deploy:rpc | tail -n 1) --environment default",
     "test": "npm run test:ganache",
-    "test:ganache": "./node_modules/@aragon/templates-shared/scripts/test-ganache.sh"
+    "test:ganache": "./node_modules/dao-templates/shared/scripts/test-ganache.sh"
   },
   "files": [
     "abi/",
@@ -29,10 +29,12 @@
     "dotenv": "^8.0.0",
     "eth-ens-namehash": "^2.0.8",
     "ganache-cli": "6.5.1",
+    "lodash": "^4.17.15",
     "truffle": "4.1.14",
     "truffle-extract": "1.2.1",
     "truffle-hdwallet-provider": "0.0.3",
-    "web3-eth-abi": "^1.2.0"
+    "web3-eth-abi": "^1.2.0",
+    "lerna": "^3.0.0"
   },
   "dependencies": {
     "@aragon/apps-agent": "^1.0.0",
@@ -44,6 +46,8 @@
     "@aragon/apps-voting": "^2.1.0",
     "@aragon/id": "2.0.3",
     "@aragon/os": "4.2.0",
-    "@aragon/templates-shared": "^1.0.0-rc.1"
+    "@aragon/templates-shared": "^1.0.0-rc.1",
+    "dao-templates": "github:levelkdev/dao-templates#0689784662997787cf695042f2968032a30ef765",
+    "futarchy-app": "github:levelkdev/futarchy-app#86fabdaab6012931de3e77a6839c964c575f46b8"
   }
 }
