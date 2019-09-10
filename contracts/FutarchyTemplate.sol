@@ -1,11 +1,17 @@
 pragma solidity 0.4.24;
 
 import "futarchy-app/contracts/Futarchy.sol";
+import "oracle-manager-app/contracts/OracleManager.sol";
 import "@aragon/templates-shared/contracts/TokenCache.sol";
 import "@aragon/templates-shared/contracts/BaseTemplate.sol";
 
 contract FutarchyTemplate is BaseTemplate, TokenCache {
+
+  // futarchy.open.aragonpm.eth
   bytes32 constant internal FUTARCHY_APP_ID = 0xe1103655b21eaf74209e26bc58ee715bc639ce36e18741f2ce83d3210a785186;
+  
+  // oracle-manager.open.aragonpm.eth
+  bytes32 constant internal ORACLE_MANAGER_APP_ID = 0xe4bb4b1d055158b9259fa4cf33f50aa4f578dadcbf30d9b517db7430918daf8f;
 
   string constant private ERROR_EMPTY_HOLDERS = "COMPANY_EMPTY_HOLDERS";
   string constant private ERROR_BAD_HOLDERS_STAKES_LEN = "COMPANY_BAD_HOLDERS_STAKES_LEN";
@@ -124,7 +130,7 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
     internal
   {
     Futarchy futarchy = _installFutarchyApp(_dao, _futarchySettings);
-    // _createFutarchyPermissions(_acl, futarchy, _voting, _voting);
+    _createFutarchyPermissions(_acl, futarchy, _voting, _voting);
   }
 
   function _installFutarchyApp(
