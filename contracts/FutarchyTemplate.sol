@@ -51,12 +51,13 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
     address[] _holders,
     uint256[] _stakes,
     uint64[3] _votingSettings,
-    bytes32[8] _futarchySettings
+    bytes32[8] _futarchySettings,
+    address[] _oracleManagerDataFeedSources
   )
     external
   {
     newToken(_tokenName, _tokenSymbol);
-    newInstance(_id, _holders, _stakes, _votingSettings, _futarchySettings);
+    newInstance(_id, _holders, _stakes, _votingSettings, _futarchySettings, _oracleManagerDataFeedSources);
   }
 
   /**
@@ -72,16 +73,18 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
     address[] memory _holders,
     uint256[] memory _stakes,
     uint64[3] memory _votingSettings,
-    bytes32[8] memory _futarchySettings
+    bytes32[8] memory _futarchySettings,
+    address[] _oracleManagerDataFeedSources
   )
     public
   {
-    _ensureSettings(_holders, _stakes, _votingSettings, _futarchySettings);
+    _ensureSettings(_holders, _stakes, _votingSettings, _futarchySettings, _oracleManagerDataFeedSources);
 
     (Kernel dao, ACL acl) = _createDAO();
     Voting voting = _setupBaseApps(dao, acl, _holders, _stakes, _votingSettings);
 
     _setupFutarchyApp(dao, acl, voting, _futarchySettings);
+    _setupOracleManagerApp(dao, acl, voting, _oracleManagerDataFeedSources);
 
     _transferRootPermissionsFromTemplateAndFinalizeDAO(dao, voting);
     _registerID(_id, dao);
@@ -133,6 +136,18 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
     _createFutarchyPermissions(_acl, futarchy, _voting, _voting);
   }
 
+  function _setupOracleManagerApp(
+    Kernel _dao,
+    ACL _acl,
+    Voting _voting,
+    address[] _oracleManagerDataFeedSources
+  )
+    internal
+  {
+    OracleManager oracleManager = _installOracleManagerApp(_dao, _oracleManagerDataFeedSources);
+    _createOracleManagerPermissions(_acl, oracleManager, _voting, _voting);
+  }
+
   function _installFutarchyApp(
     Kernel _dao,
     bytes32[8] _futarchySettings
@@ -154,6 +169,18 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
     return Futarchy(_installNonDefaultApp(_dao, FUTARCHY_APP_ID, initializeData));
   }
 
+  function _installOracleManagerApp(
+    Kernel _dao,
+    address[] _oracleManagerDataFeedSources
+  )
+    internal
+    returns (OracleManager)
+  {
+    bytes4 initializeSelector = bytes4(keccak256("initialize(address[],address)"));
+    bytes memory initializeData = abi.encodeWithSelector(initializeSelector, _oracleManagerDataFeedSources, address(0));
+    return OracleManager(_installNonDefaultApp(_dao, ORACLE_MANAGER_APP_ID, initializeData));
+  }
+
   function _createFutarchyPermissions(
     ACL _acl,
     Futarchy _futarchy,
@@ -165,11 +192,23 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
     _acl.createPermission(_grantee, _futarchy, _futarchy.CREATE_DECISION_ROLE(), _manager);
   }
 
+  function _createOracleManagerPermissions(
+    ACL _acl,
+    OracleManager _oracleManager,
+    address _grantee,
+    address _manager
+  )
+    internal
+  {
+    _acl.createPermission(_grantee, _oracleManager, _oracleManager.MANAGE_DATA_FEEDS(), _manager);
+  }
+
   function _ensureSettings(
     address[] memory _holders,
     uint256[] memory _stakes,
     uint64[3] memory _votingSettings,
-    bytes32[8] memory _futarchySettings
+    bytes32[8] memory _futarchySettings,
+    address[] _oracleManagerDataFeedSources
   )
     private
     pure
@@ -178,5 +217,6 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
     require(_holders.length == _stakes.length, ERROR_BAD_HOLDERS_STAKES_LEN);
     require(_votingSettings.length == 3, ERROR_BAD_VOTE_SETTINGS);
     // TODO: verify futarchy settings
+    // TODO: verify oracle manater settings
   }
 }
