@@ -11,6 +11,7 @@ const { OPEN_APP_IDS } = require('../helpers/openApps')
 
 const FutarchyTemplate = artifacts.require('FutarchyTemplate')
 const Futarchy = artifacts.require('Futarchy')
+const OracleManager = artifacts.require('OracleManager')
 
 const ENS = artifacts.require('ENS')
 const ACL = artifacts.require('ACL')
@@ -28,7 +29,7 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
   
   let daoID, template, dao, ens
   let voting, tokenManager, token
-  let futarchy
+  let futarchy, oracleManager
 
   const HOLDERS = [holder1, holder2]
   const STAKES = HOLDERS.map(() => 1e18)
@@ -47,6 +48,11 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
   const FUTARCHY_ORACLE_FACTORY = '0xe53a21d1cb80c8112d12808bc37128bb5e32fcaf'
   const PRICE_ORACLE_FACTORY = '0xf110f62e5165d71f4369e85d86587c28e55e7145'
   const LMSR_MARKET_MAKER = '0xf930779b2f8efc687e690b2aef50e2ea326d4ada'
+
+  const ORACLE_MANAGER_DATA_FEED_SOURCES = [
+    '0x4915c406f92cac8df60e22c3a5b1fd15b1cd6fb2',
+    '0xdaec71c58228141a7b43f7c59f3dc3c0f1a64eb4'
+  ]
 
   const FUTARCHY_SETTINGS = [
     numberToBytes32(FUTARCHY_FEE),
@@ -82,6 +88,9 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
 
     assert.equal(installedOpenApps['futarchy'].length, 1, 'should have installed 1 futarchy app')
     futarchy = Futarchy.at(installedOpenApps['futarchy'][0])
+
+    assert.equal(installedOpenApps['oracle-manager'].length, 1, 'should have installed 1 oracle-manager app')
+    oracleManager = OracleManager.at(installedOpenApps['oracle-manager'][0])
   }
 
   const testDAOSetup = () => {
@@ -139,6 +148,20 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
       await assertRole(acl, futarchy, voting, 'CREATE_DECISION_ROLE')
     })
 
+    it('should have oracle-manager app correctly setup', async () => {
+      assert.isTrue(await oracleManager.approvedDataFeeds(
+        ORACLE_MANAGER_DATA_FEED_SOURCES[0]),
+        `dataFeed ${ORACLE_MANAGER_DATA_FEED_SOURCES[0]} should be approved`
+      )
+
+      assert.isTrue(await oracleManager.approvedDataFeeds(
+        ORACLE_MANAGER_DATA_FEED_SOURCES[1]),
+        `dataFeed ${ORACLE_MANAGER_DATA_FEED_SOURCES[1]} should be approved`
+      )
+
+      await assertRole(acl, oracleManager, voting, 'MANAGE_DATA_FEEDS')
+    })
+
     it('sets up DAO and ACL permissions correctly', async () => {
       await assertRole(acl, dao, voting, 'APP_MANAGER_ROLE')
       await assertRole(acl, acl, voting, 'CREATE_PERMISSIONS_ROLE')
@@ -154,12 +177,12 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
   context('creating instances with a single transaction', () => {
     context('when the creation fails', () => {
       it('reverts when no holders were given', async () => {
-        await assertRevert(template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, randomId(), [], [], VOTING_SETTINGS, FUTARCHY_SETTINGS), 'COMPANY_EMPTY_HOLDERS')
+        await assertRevert(template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, randomId(), [], [], VOTING_SETTINGS, FUTARCHY_SETTINGS, ORACLE_MANAGER_DATA_FEED_SOURCES), 'COMPANY_EMPTY_HOLDERS')
       })
 
       it('reverts when holders and stakes length do not match', async () => {
-        await assertRevert(template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, randomId(), [holder1], STAKES, VOTING_SETTINGS, FUTARCHY_SETTINGS), 'COMPANY_BAD_HOLDERS_STAKES_LEN')
-        await assertRevert(template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, randomId(), HOLDERS, [1e18], VOTING_SETTINGS, FUTARCHY_SETTINGS), 'COMPANY_BAD_HOLDERS_STAKES_LEN')
+        await assertRevert(template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, randomId(), [holder1], STAKES, VOTING_SETTINGS, FUTARCHY_SETTINGS, ORACLE_MANAGER_DATA_FEED_SOURCES), 'COMPANY_BAD_HOLDERS_STAKES_LEN')
+        await assertRevert(template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, randomId(), HOLDERS, [1e18], VOTING_SETTINGS, FUTARCHY_SETTINGS, ORACLE_MANAGER_DATA_FEED_SOURCES), 'COMPANY_BAD_HOLDERS_STAKES_LEN')
       })
     })
 
@@ -168,7 +191,7 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
 
       before('create futarchy', async () => {
         daoID = randomId()
-        receipt = await template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, daoID, HOLDERS, STAKES, VOTING_SETTINGS, FUTARCHY_SETTINGS, { from: owner })
+        receipt = await template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, daoID, HOLDERS, STAKES, VOTING_SETTINGS, FUTARCHY_SETTINGS, ORACLE_MANAGER_DATA_FEED_SOURCES, { from: owner })
 
         await loadDAO(receipt, receipt)
       })
