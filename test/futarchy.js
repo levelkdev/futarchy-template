@@ -1,13 +1,16 @@
 const assertRevert = require('dao-templates/shared/helpers/assertRevert')(web3)
+const { numberToBytes32, addressToBytes32 } = require('../src/utils')
 
 const { hash: namehash } = require('eth-ens-namehash')
 const { randomId } = require('dao-templates/shared/helpers/aragonId')
 const { getEventArgument } = require('@aragon/test-helpers/events')
 const { deployedAddresses } = require('dao-templates/shared/lib/arapp-file')(web3)
-const { getInstalledAppsById } = require('dao-templates/shared/helpers/events')(artifacts)
+const { getInstalledAppsById, getInstalledApps } = require('dao-templates/shared/helpers/events')(artifacts)
 const { assertRole, assertMissingRole } = require('dao-templates/shared/helpers/assertRole')(web3)
+const { OPEN_APP_IDS } = require('../helpers/openApps')
 
 const FutarchyTemplate = artifacts.require('FutarchyTemplate')
+const Futarchy = artifacts.require('Futarchy')
 
 const ENS = artifacts.require('ENS')
 const ACL = artifacts.require('ACL')
@@ -22,20 +25,20 @@ const ONE_DAY = 60 * 60 * 24
 const ONE_WEEK = ONE_DAY * 7
 
 contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
+  
   let daoID, template, dao, ens
   let voting, tokenManager, token
+  let futarchy
 
   const HOLDERS = [holder1, holder2]
   const STAKES = HOLDERS.map(() => 1e18)
-  const TOKEN_NAME = 'Share Token'
-  const TOKEN_SYMBOL = 'SHARE'
+  const TOKEN_NAME = 'Futarchy Token'
+  const TOKEN_SYMBOL = 'FUT'
 
   const VOTE_DURATION = ONE_WEEK
   const SUPPORT_REQUIRED = 50e16
   const MIN_ACCEPTANCE_QUORUM = 5e16
   const VOTING_SETTINGS = [SUPPORT_REQUIRED, MIN_ACCEPTANCE_QUORUM, VOTE_DURATION]
-
-  // [futarchyFee, futarchyTradingPeriod, futarchyTimeToPriceResolution, futarchyMarketFundAmount, futarchyToken, futarchyOracleFactory, priceOracleFactory, lmsrMarketMaker]
   const FUTARCHY_FEE = 2000
   const FUTARCHY_TRADING_PERIOD = 60 * 60 * 24 * 7
   const FUTARCHY_TIME_TO_PRICE_RESOLUTION = FUTARCHY_TRADING_PERIOD * 2
@@ -44,7 +47,17 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
   const FUTARCHY_ORACLE_FACTORY = '0xe53a21d1cb80c8112d12808bc37128bb5e32fcaf'
   const PRICE_ORACLE_FACTORY = '0xf110f62e5165d71f4369e85d86587c28e55e7145'
   const LMSR_MARKET_MAKER = '0xf930779b2f8efc687e690b2aef50e2ea326d4ada'
-  const FUTARCHY_SETTINGS = [FUTARCHY_FEE, FUTARCHY_TRADING_PERIOD, FUTARCHY_TIME_TO_PRICE_RESOLUTION, FUTARCHY_MARKET_FUND_AMOUNT, FUTARCHY_TOKEN, FUTARCHY_ORACLE_FACTORY, PRICE_ORACLE_FACTORY, LMSR_MARKET_MAKER]
+
+  const FUTARCHY_SETTINGS = [
+    numberToBytes32(FUTARCHY_FEE),
+    numberToBytes32(FUTARCHY_TRADING_PERIOD),
+    numberToBytes32(FUTARCHY_TIME_TO_PRICE_RESOLUTION),
+    numberToBytes32(FUTARCHY_MARKET_FUND_AMOUNT),
+    addressToBytes32(FUTARCHY_TOKEN),
+    addressToBytes32(FUTARCHY_ORACLE_FACTORY),
+    addressToBytes32(PRICE_ORACLE_FACTORY),
+    addressToBytes32(LMSR_MARKET_MAKER)
+  ]
 
   before('fetch futarchy template and ENS', async () => {
     const { registry, address } = await deployedAddresses()
@@ -57,6 +70,7 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
     token = MiniMeToken.at(getEventArgument(tokenReceipt, 'DeployToken', 'token'))
     acl = ACL.at(await dao.acl())
     const installedApps = getInstalledAppsById(instanceReceipt)
+    const installedOpenApps = getInstalledOpenApps(instanceReceipt)
 
     assert.equal(dao.address, getEventArgument(instanceReceipt, 'SetupDao', 'dao'), 'should have emitted a SetupDao event')
     
@@ -65,13 +79,16 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
 
     assert.equal(installedApps['token-manager'].length, 1, 'should have installed 1 token manager app')
     tokenManager = TokenManager.at(installedApps['token-manager'][0])
+
+    assert.equal(installedOpenApps['futarchy'].length, 1, 'should have installed 1 futarchy app')
+    futarchy = Futarchy.at(installedOpenApps['futarchy'][0])
   }
 
   const testDAOSetup = () => {
-    it.only('registers a new DAO on ENS', async () => {
-      // const aragonIdNameHash = namehash(`${daoID}.aragonid.eth`)
-      // const resolvedAddress = await PublicResolver.at(await ens.resolver(aragonIdNameHash)).addr(aragonIdNameHash)
-      // assert.equal(resolvedAddress, dao.address, 'aragonId ENS name does not match')
+    it('registers a new DAO on ENS', async () => {
+      const aragonIdNameHash = namehash(`${daoID}.aragonid.eth`)
+      const resolvedAddress = await PublicResolver.at(await ens.resolver(aragonIdNameHash)).addr(aragonIdNameHash)
+      assert.equal(resolvedAddress, dao.address, 'aragonId ENS name does not match')
     })
 
     it('creates a new token', async () => {
@@ -107,6 +124,19 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
       await assertMissingRole(acl, tokenManager, 'ISSUE_ROLE')
       await assertMissingRole(acl, tokenManager, 'ASSIGN_ROLE')
       await assertMissingRole(acl, tokenManager, 'REVOKE_VESTINGS_ROLE')
+    })
+
+    it('should have futarchy app correctly setup', async () => {
+      assert.equal((await futarchy.fee()).toString(), FUTARCHY_FEE)
+      assert.equal((await futarchy.tradingPeriod()).toString(), FUTARCHY_TRADING_PERIOD)
+      assert.equal((await futarchy.timeToPriceResolution()).toString(), FUTARCHY_TIME_TO_PRICE_RESOLUTION)
+      assert.equal((await futarchy.marketFundAmount()).toString(), FUTARCHY_MARKET_FUND_AMOUNT)
+      assert.equal((await futarchy.token()).toString(), FUTARCHY_TOKEN)
+      assert.equal((await futarchy.futarchyOracleFactory()).toString(), FUTARCHY_ORACLE_FACTORY)
+      assert.equal((await futarchy.priceOracleFactory()).toString(), PRICE_ORACLE_FACTORY)
+      assert.equal((await futarchy.lmsrMarketMaker()).toString(), LMSR_MARKET_MAKER)
+
+      await assertRole(acl, futarchy, voting, 'CREATE_DECISION_ROLE')
     })
 
     it('sets up DAO and ACL permissions correctly', async () => {
@@ -147,3 +177,10 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
     })
   })
 })
+
+function getInstalledOpenApps (receipt) {
+  return Object.keys(OPEN_APP_IDS).reduce((apps, appName) => {
+    apps[appName] = getInstalledApps(receipt, OPEN_APP_IDS[appName])
+    return apps
+  }, {})
+}
