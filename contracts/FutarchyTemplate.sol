@@ -23,7 +23,8 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
 
   constructor(
     DAOFactory _daoFactory,
-    ENS _ens, MiniMeTokenFactory _miniMeFactory,
+    ENS _ens,
+    MiniMeTokenFactory _miniMeFactory,
     IFIFSResolvingRegistrar _aragonID
   )
     BaseTemplate(_daoFactory, _ens, _miniMeFactory, _aragonID)
