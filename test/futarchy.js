@@ -46,7 +46,6 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
   const FUTARCHY_MARKET_FUND_AMOUNT = 10 * 10 ** 18
   const FUTARCHY_TOKEN = '0x4f2c50140e85a5fa7c86151487e6b41f63a706e5'
   const FUTARCHY_ORACLE_FACTORY = '0xe53a21d1cb80c8112d12808bc37128bb5e32fcaf'
-  const PRICE_ORACLE_FACTORY = '0xf110f62e5165d71f4369e85d86587c28e55e7145'
   const LMSR_MARKET_MAKER = '0xf930779b2f8efc687e690b2aef50e2ea326d4ada'
 
   const ORACLE_MANAGER_DATA_FEED_SOURCES = [
@@ -61,9 +60,10 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
     numberToBytes32(FUTARCHY_MARKET_FUND_AMOUNT),
     addressToBytes32(FUTARCHY_TOKEN),
     addressToBytes32(FUTARCHY_ORACLE_FACTORY),
-    addressToBytes32(PRICE_ORACLE_FACTORY),
     addressToBytes32(LMSR_MARKET_MAKER)
   ]
+
+  const MEDIAN_PRICE_ORACLE_TIMEFRAME = 60 * 60 * 24
 
   before('fetch futarchy template and ENS', async () => {
     const { registry, address } = await deployedAddresses()
@@ -142,7 +142,10 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
       assert.equal((await futarchy.marketFundAmount()).toString(), FUTARCHY_MARKET_FUND_AMOUNT)
       assert.equal((await futarchy.token()).toString(), FUTARCHY_TOKEN)
       assert.equal((await futarchy.futarchyOracleFactory()).toString(), FUTARCHY_ORACLE_FACTORY)
-      assert.equal((await futarchy.priceOracleFactory()).toString(), PRICE_ORACLE_FACTORY)
+      
+      // TODO: this should be the factory deployed by the template...
+      // assert.equal((await futarchy.priceOracleFactory()).toString(), PRICE_ORACLE_FACTORY)
+      
       assert.equal((await futarchy.lmsrMarketMaker()).toString(), LMSR_MARKET_MAKER)
 
       await assertRole(acl, futarchy, voting, 'CREATE_DECISION_ROLE')
@@ -177,12 +180,12 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
   context('creating instances with a single transaction', () => {
     context('when the creation fails', () => {
       it('reverts when no holders were given', async () => {
-        await assertRevert(template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, randomId(), [], [], VOTING_SETTINGS, FUTARCHY_SETTINGS, ORACLE_MANAGER_DATA_FEED_SOURCES), 'COMPANY_EMPTY_HOLDERS')
+        await assertRevert(template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, randomId(), [], [], VOTING_SETTINGS, FUTARCHY_SETTINGS, ORACLE_MANAGER_DATA_FEED_SOURCES, MEDIAN_PRICE_ORACLE_TIMEFRAME), 'COMPANY_EMPTY_HOLDERS')
       })
 
       it('reverts when holders and stakes length do not match', async () => {
-        await assertRevert(template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, randomId(), [holder1], STAKES, VOTING_SETTINGS, FUTARCHY_SETTINGS, ORACLE_MANAGER_DATA_FEED_SOURCES), 'COMPANY_BAD_HOLDERS_STAKES_LEN')
-        await assertRevert(template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, randomId(), HOLDERS, [1e18], VOTING_SETTINGS, FUTARCHY_SETTINGS, ORACLE_MANAGER_DATA_FEED_SOURCES), 'COMPANY_BAD_HOLDERS_STAKES_LEN')
+        await assertRevert(template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, randomId(), [holder1], STAKES, VOTING_SETTINGS, FUTARCHY_SETTINGS, ORACLE_MANAGER_DATA_FEED_SOURCES, MEDIAN_PRICE_ORACLE_TIMEFRAME), 'COMPANY_BAD_HOLDERS_STAKES_LEN')
+        await assertRevert(template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, randomId(), HOLDERS, [1e18], VOTING_SETTINGS, FUTARCHY_SETTINGS, ORACLE_MANAGER_DATA_FEED_SOURCES, MEDIAN_PRICE_ORACLE_TIMEFRAME), 'COMPANY_BAD_HOLDERS_STAKES_LEN')
       })
     })
 
@@ -191,7 +194,7 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
 
       before('create futarchy', async () => {
         daoID = randomId()
-        receipt = await template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, daoID, HOLDERS, STAKES, VOTING_SETTINGS, FUTARCHY_SETTINGS, ORACLE_MANAGER_DATA_FEED_SOURCES, { from: owner })
+        receipt = await template.newTokenAndInstance(TOKEN_NAME, TOKEN_SYMBOL, daoID, HOLDERS, STAKES, VOTING_SETTINGS, FUTARCHY_SETTINGS, ORACLE_MANAGER_DATA_FEED_SOURCES, MEDIAN_PRICE_ORACLE_TIMEFRAME, { from: owner })
 
         await loadDAO(receipt, receipt)
       })
