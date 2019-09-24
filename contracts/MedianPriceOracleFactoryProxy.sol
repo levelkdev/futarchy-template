@@ -4,8 +4,8 @@ import "@gnosis.pm/pm-contracts/contracts/GnosisUtilContracts/Proxy.sol";
 
 /// @title Proxy contract for MedianPriceOracleFactory
 contract MedianPriceOracleFactoryProxy is Proxy {
-  address timeMedianDataFeed;
-  uint medianTimeframe;
+  address public timeMedianDataFeed;
+  uint public medianTimeframe;
 
   constructor(
     address _timeMedianDataFeed,

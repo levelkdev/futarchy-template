@@ -21,6 +21,7 @@ const TokenManager = artifacts.require('TokenManager')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const PublicResolver = artifacts.require('PublicResolver')
 const EVMScriptRegistry = artifacts.require('EVMScriptRegistry')
+const MedianPriceOracleFactory = artifacts.require('MedianPriceOracleFactory')
 
 const ONE_DAY = 60 * 60 * 24
 const ONE_WEEK = ONE_DAY * 7
@@ -29,7 +30,7 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
   
   let daoID, template, dao, ens
   let voting, tokenManager, token
-  let futarchy, oracleManager
+  let futarchy, oracleManager, medianPriceOracleFactory
 
   const HOLDERS = [holder1, holder2]
   const STAKES = HOLDERS.map(() => 1e18)
@@ -74,11 +75,16 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
   const loadDAO = async (tokenReceipt, instanceReceipt) => {
     dao = Kernel.at(getEventArgument(instanceReceipt, 'DeployDao', 'dao'))
     token = MiniMeToken.at(getEventArgument(tokenReceipt, 'DeployToken', 'token'))
+    medianPriceOracleFactory = MedianPriceOracleFactory.at(
+      getEventArgument(instanceReceipt, 'MedianPriceOracleFactoryDeployed', 'medianPriceOracleFactory')
+    )
     acl = ACL.at(await dao.acl())
     const installedApps = getInstalledAppsById(instanceReceipt)
     const installedOpenApps = getInstalledOpenApps(instanceReceipt)
 
     assert.equal(dao.address, getEventArgument(instanceReceipt, 'SetupDao', 'dao'), 'should have emitted a SetupDao event')
+
+    assert.ok(getEventArgument(instanceReceipt, 'MedianPriceOracleFactoryDeployed', 'medianPriceOracleFactory'), 'should have emitted a MedianPriceOracleFactoryDeployed event')
     
     assert.equal(installedApps.voting.length, 1, 'should have installed 1 voting app')
     voting = Voting.at(installedApps.voting[0])
@@ -142,11 +148,8 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
       assert.equal((await futarchy.marketFundAmount()).toString(), FUTARCHY_MARKET_FUND_AMOUNT)
       assert.equal((await futarchy.token()).toString(), FUTARCHY_TOKEN)
       assert.equal((await futarchy.futarchyOracleFactory()).toString(), FUTARCHY_ORACLE_FACTORY)
-      
-      // TODO: this should be the factory deployed by the template...
-      // assert.equal((await futarchy.priceOracleFactory()).toString(), PRICE_ORACLE_FACTORY)
-      
       assert.equal((await futarchy.lmsrMarketMaker()).toString(), LMSR_MARKET_MAKER)
+      assert.equal((await futarchy.priceOracleFactory()).toString(), medianPriceOracleFactory.address.toLowerCase())
 
       await assertRole(acl, futarchy, voting, 'CREATE_DECISION_ROLE')
     })
@@ -163,6 +166,11 @@ contract('FutarchyTemplate', ([_, owner, holder1, holder2]) => {
       )
 
       await assertRole(acl, oracleManager, voting, 'MANAGE_DATA_FEEDS')
+    })
+
+    it('should have median price oracle factory deployed correctly', async () => {
+      assert.equal(await medianPriceOracleFactory.timeMedianDataFeed(), oracleManager.address.toLowerCase())
+      assert.equal((await medianPriceOracleFactory.medianTimeframe()).toString(), MEDIAN_PRICE_ORACLE_TIMEFRAME)
     })
 
     it('sets up DAO and ACL permissions correctly', async () => {

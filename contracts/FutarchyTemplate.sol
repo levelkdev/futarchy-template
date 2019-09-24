@@ -25,7 +25,7 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
   uint8 constant private TOKEN_DECIMALS = uint8(18);
   uint256 constant private TOKEN_MAX_PER_ACCOUNT = uint256(0);
 
-  MedianPriceOracleFactory medianPriceOracleFactoryMaster;
+  MedianPriceOracleFactory public medianPriceOracleFactoryMaster;
 
   constructor(
     DAOFactory _daoFactory,
