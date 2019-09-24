@@ -46,27 +46,31 @@ const FUTARCHY_SETTINGS = [
 const MEDIAN_PRICE_ORACLE_TIMEFRAME = 60 * 60 * 24
 
 module.exports = async (callback) => {
-  const network = process.argv[5]
-  const { address: futarchyTemplateAddr } = getConfig(network)
-  const futarchyTemplate = await FutarchyTemplate.at(futarchyTemplateAddr)
+  try {
+    const network = process.argv[5]
+    const { address: futarchyTemplateAddr } = getConfig(network)
+    const futarchyTemplate = await FutarchyTemplate.at(futarchyTemplateAddr)
 
-  const daoID = randomId()
+    const daoID = randomId()
 
-  const receipt = await futarchyTemplate.newTokenAndInstance(
-    TOKEN_NAME,
-    TOKEN_SYMBOL,
-    daoID,
-    HOLDERS,
-    STAKES,
-    VOTING_SETTINGS,
-    FUTARCHY_SETTINGS,
-    ORACLE_MANAGER_DATA_FEED_SOURCES,
-    MEDIAN_PRICE_ORACLE_TIMEFRAME
-  )
+    const receipt = await futarchyTemplate.newTokenAndInstance(
+      TOKEN_NAME,
+      TOKEN_SYMBOL,
+      daoID,
+      HOLDERS,
+      STAKES,
+      VOTING_SETTINGS,
+      FUTARCHY_SETTINGS,
+      ORACLE_MANAGER_DATA_FEED_SOURCES,
+      MEDIAN_PRICE_ORACLE_TIMEFRAME
+    )
 
-  console.log('Deployed FutarchDAO:')
-  console.log('  receipt.tx: ', receipt.tx)
-  console.log('  receipt.logs: ', receipt.logs)
+    console.log('Deployed FutarchDAO:')
+    console.log('  receipt.tx: ', receipt.tx)
+    console.log('  receipt.logs: ', receipt.logs)
+  } catch (err) {
+    console.log('Error in scripts/newFutarchyDAO.js: ', err)
+  }
   callback()
 }
 
