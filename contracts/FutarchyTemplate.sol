@@ -1,11 +1,15 @@
 pragma solidity 0.4.24;
 
 import "futarchy-app/contracts/Futarchy.sol";
+import "futarchy-app/contracts/Oracles/MedianPriceOracleFactory.sol";
 import "oracle-manager-app/contracts/OracleManager.sol";
 import "@aragon/templates-shared/contracts/TokenCache.sol";
 import "@aragon/templates-shared/contracts/BaseTemplate.sol";
+import "./MedianPriceOracleFactoryProxy.sol";
 
 contract FutarchyTemplate is BaseTemplate, TokenCache {
+
+  event MedianPriceOracleFactoryDeployed(MedianPriceOracleFactory medianPriceOracleFactory);
 
   // futarchy.open.aragonpm.eth
   bytes32 constant internal FUTARCHY_APP_ID = 0xe1103655b21eaf74209e26bc58ee715bc639ce36e18741f2ce83d3210a785186;
@@ -21,6 +25,8 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
   uint8 constant private TOKEN_DECIMALS = uint8(18);
   uint256 constant private TOKEN_MAX_PER_ACCOUNT = uint256(0);
 
+  MedianPriceOracleFactory public medianPriceOracleFactoryMaster;
+
   constructor(
     DAOFactory _daoFactory,
     ENS _ens,
@@ -32,6 +38,8 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
   {
     _ensureAragonIdIsValid(_aragonID);
     _ensureMiniMeFactoryIsValid(_miniMeFactory);
+
+    medianPriceOracleFactoryMaster = new MedianPriceOracleFactory(address(0), 0);
   }
 
   /**
@@ -43,7 +51,8 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
   * @param _holders Array of token holder addresses
   * @param _stakes Array of token stakes for holders (token has 18 decimals, multiply token amount `* 10^18`)
   * @param _votingSettings Array of [supportRequired, minAcceptanceQuorum, voteDuration] to set up the voting app of the organization
-  * @param _futarchySettings Array of [futarchyFee, futarchyTradingPeriod, futarchyTimeToPriceResolution, futarchyMarketFundAmount, futarchyToken, futarchyOracleFactory, priceOracleFactory, lmsrMarketMaker] to set up the futarchy app of the organization
+  * @param _futarchySettings Array of [futarchyFee, futarchyTradingPeriod, futarchyTimeToPriceResolution, futarchyMarketFundAmount, futarchyToken, futarchyOracleFactory, lmsrMarketMaker] to set up the futarchy app of the organization
+  * @param _medianPriceOracleTimeframe Timeframe when median price will be calculated for futarchy market resolution. Medianizing of price data starts at ((startDate + futarchyTimeToPriceResolution) - _medianPriceOracleTimeframe) and ends at (startDate + futarchyTimeToPriceResolution), where "startDate" is futarchy market creation time.
   */
   function newTokenAndInstance(
     string _tokenName,
@@ -52,13 +61,14 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
     address[] _holders,
     uint256[] _stakes,
     uint64[3] _votingSettings,
-    bytes32[8] _futarchySettings,
-    address[] _oracleManagerDataFeedSources
+    bytes32[7] _futarchySettings,
+    address[] _oracleManagerDataFeedSources,
+    uint _medianPriceOracleTimeframe
   )
     external
   {
     newToken(_tokenName, _tokenSymbol);
-    newInstance(_id, _holders, _stakes, _votingSettings, _futarchySettings, _oracleManagerDataFeedSources);
+    newInstance(_id, _holders, _stakes, _votingSettings, _futarchySettings, _oracleManagerDataFeedSources, _medianPriceOracleTimeframe);
   }
 
   /**
@@ -67,15 +77,16 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
   * @param _holders Array of token holder addresses
   * @param _stakes Array of token stakes for holders (token has 18 decimals, multiply token amount `* 10^18`)
   * @param _votingSettings Array of [supportRequired, minAcceptanceQuorum, voteDuration] to set up the voting app of the organization
-  * @param _futarchySettings Array of [futarchyFee, futarchyTradingPeriod, futarchyTimeToPriceResolution, futarchyMarketFundAmount, futarchyToken, futarchyOracleFactory, priceOracleFactory, lmsrMarketMaker] to set up the futarchy app of the organization
+  * @param _futarchySettings Array of [futarchyFee, futarchyTradingPeriod, futarchyTimeToPriceResolution, futarchyMarketFundAmount, futarchyToken, futarchyOracleFactory, lmsrMarketMaker] to set up the futarchy app of the organization
   */
   function newInstance(
     string memory _id,
     address[] memory _holders,
     uint256[] memory _stakes,
     uint64[3] memory _votingSettings,
-    bytes32[8] memory _futarchySettings,
-    address[] _oracleManagerDataFeedSources
+    bytes32[7] memory _futarchySettings,
+    address[] _oracleManagerDataFeedSources,
+    uint _medianPriceOracleTimeframe
   )
     public
   {
@@ -84,8 +95,15 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
     (Kernel dao, ACL acl) = _createDAO();
     Voting voting = _setupBaseApps(dao, acl, _holders, _stakes, _votingSettings);
 
-    _setupFutarchyApp(dao, acl, voting, _futarchySettings);
-    _setupOracleManagerApp(dao, acl, voting, _oracleManagerDataFeedSources);
+    // deploy the Oracle Manager app
+    OracleManager oracleManager = _setupOracleManagerApp(dao, acl, voting, _oracleManagerDataFeedSources);
+
+    // deploy a MedianPriceOracleFactory with the OracleManager set as it's price data feed
+    MedianPriceOracleFactory medianPriceOracleFactory = _deployMedianPriceOracleFactory(oracleManager, _medianPriceOracleTimeframe);
+
+    // deploy the Futarchy app with the MedianPriceOracleFactory set as it's price oracle. All decision
+    // markets will be resolved with medianized price data from the OracleManager.
+    _setupFutarchyApp(dao, acl, voting, _futarchySettings, medianPriceOracleFactory);
 
     _transferRootPermissionsFromTemplateAndFinalizeDAO(dao, voting);
     _registerID(_id, dao);
@@ -129,11 +147,12 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
     Kernel _dao,
     ACL _acl,
     Voting _voting,
-    bytes32[8] _futarchySettings
+    bytes32[7] _futarchySettings,
+    MedianPriceOracleFactory _medianPriceOracleFactory
   )
     internal
   {
-    Futarchy futarchy = _installFutarchyApp(_dao, _futarchySettings);
+    Futarchy futarchy = _installFutarchyApp(_dao, _futarchySettings, _medianPriceOracleFactory);
     _createFutarchyPermissions(_acl, futarchy, _voting, _voting);
   }
 
@@ -144,29 +163,33 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
     address[] _oracleManagerDataFeedSources
   )
     internal
+    returns (OracleManager)
   {
     OracleManager oracleManager = _installOracleManagerApp(_dao, _oracleManagerDataFeedSources);
     _createOracleManagerPermissions(_acl, oracleManager, _voting, _voting);
+    return oracleManager;
   }
 
   function _installFutarchyApp(
     Kernel _dao,
-    bytes32[8] _futarchySettings
+    bytes32[7] _futarchySettings,
+    MedianPriceOracleFactory _medianPriceOracleFactory
   )
     internal
     returns (Futarchy)
   {
-    uint24 _futarchyFee = uint24(_futarchySettings[0]);
-    uint _futarchyTradingPeriod = uint(_futarchySettings[1]);
-    uint _futarchyTimeToPriceResolution = uint(_futarchySettings[2]);
-    uint _futarchyMarketFundAmount = uint(_futarchySettings[3]);
-    address _futarchyToken = address(_futarchySettings[4]);
-    address _futarchyOracleFactory = address(_futarchySettings[5]);
-    address _priceOracleFactory = address(_futarchySettings[6]);
-    address _lmsrMarketMaker = address(_futarchySettings[7]);
-
-    bytes memory initializeData = abi.encodeWithSelector(Futarchy(0).initialize.selector, _futarchyFee, _futarchyTradingPeriod, _futarchyTimeToPriceResolution, _futarchyMarketFundAmount, ERC20Gnosis(_futarchyToken), FutarchyOracleFactory(_futarchyOracleFactory), IScalarPriceOracleFactory(_priceOracleFactory), LMSRMarketMaker(_lmsrMarketMaker));
-
+    bytes memory initializeData = abi.encodeWithSelector(
+      Futarchy(0).initialize.selector,
+      uint24(_futarchySettings[0]), // fee
+      uint(_futarchySettings[1]), // tradingPeriod
+      uint(_futarchySettings[2]), // timeToPriceResolution
+      uint(_futarchySettings[3]), // marketFundAmount
+      ERC20Gnosis(address(_futarchySettings[4])), // token
+      FutarchyOracleFactory(address(_futarchySettings[5])), // futarchyOracleFactory
+      IScalarPriceOracleFactory(_medianPriceOracleFactory), // priceOracleFactory
+      LMSRMarketMaker(address(_futarchySettings[6])) // lmsrMarketMaker
+    );
+    
     return Futarchy(_installNonDefaultApp(_dao, FUTARCHY_APP_ID, initializeData));
   }
 
@@ -204,11 +227,29 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
     _acl.createPermission(_grantee, _oracleManager, _oracleManager.MANAGE_DATA_FEEDS(), _manager);
   }
 
+  function _deployMedianPriceOracleFactory(
+    OracleManager _oracleManager,
+    uint _medianPriceOracleTimeframe
+  )
+    internal
+    returns (MedianPriceOracleFactory)
+  {
+    MedianPriceOracleFactory medianPriceOracleFactory = MedianPriceOracleFactory(
+      new MedianPriceOracleFactoryProxy(
+        address(_oracleManager),
+        _medianPriceOracleTimeframe,
+        address(medianPriceOracleFactoryMaster)
+      )
+    );
+    emit MedianPriceOracleFactoryDeployed(medianPriceOracleFactory);
+    return medianPriceOracleFactory;
+  }
+
   function _ensureSettings(
     address[] memory _holders,
     uint256[] memory _stakes,
     uint64[3] memory _votingSettings,
-    bytes32[8] memory _futarchySettings,
+    bytes32[7] memory _futarchySettings,
     address[] _oracleManagerDataFeedSources
   )
     private
