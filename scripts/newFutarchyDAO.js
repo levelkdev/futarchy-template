@@ -4,11 +4,13 @@ const { numberToBytes32, addressToBytes32 } = require('../src/utils')
 
 const FutarchyTemplate = artifacts.require('FutarchyTemplate')
 
-const HOLDERS = [
-  '0x33329f5a360649eb1c473b998cf3b975feb109f6',
-  '0x44360017c1460bc0149946b4fad97665c25586b0'
-]
-const STAKES = HOLDERS.map(() => 1e18)
+const testAddr1 = '0x33329f5a360649eb1c473b998cf3b975feb109f6'
+const testAddr2 = '0x44360017c1460bc0149946b4fad97665c25586b0'
+
+const rinkebyDaiAddr = '0x5592ec0cfb4dbc12d3ab100b257153436a1f0fea'
+
+const HOLDERS = [testAddr1, testAddr2]
+const STAKES = HOLDERS.map(() => 1e18 * 100)
 
 const TOKEN_NAME = 'AragonFutarchySignalingMarketToken'
 const TOKEN_SYMBOL = 'AFSMT'
@@ -23,14 +25,13 @@ const VOTING_SETTINGS = [SUPPORT_REQUIRED, MIN_ACCEPTANCE_QUORUM, VOTE_DURATION]
 const FUTARCHY_FEE = 2000
 const FUTARCHY_TRADING_PERIOD = 60 * 60 * 24 * 7
 const FUTARCHY_TIME_TO_PRICE_RESOLUTION = FUTARCHY_TRADING_PERIOD * 2
-const FUTARCHY_MARKET_FUND_AMOUNT = 10 * 10 ** 18
-const FUTARCHY_TOKEN = '0x4f2c50140e85a5fa7c86151487e6b41f63a706e5'
-const FUTARCHY_ORACLE_FACTORY = '0xe53a21d1cb80c8112d12808bc37128bb5e32fcaf'
-const LMSR_MARKET_MAKER = '0xf930779b2f8efc687e690b2aef50e2ea326d4ada'
+const FUTARCHY_MARKET_FUND_AMOUNT = 1e18 / 10
+const FUTARCHY_TOKEN = rinkebyDaiAddr
+const FUTARCHY_ORACLE_FACTORY = '0x1fad5ae333ef73ea9810bf90846cadbaabb72a36'
+const LMSR_MARKET_MAKER = '0x5995f896899256ac9496d17a03125b2ea3df34a4'
 
 const ORACLE_MANAGER_DATA_FEED_SOURCES = [
-  '0x4915c406f92cac8df60e22c3a5b1fd15b1cd6fb2',
-  '0xdaec71c58228141a7b43f7c59f3dc3c0f1a64eb4'
+  '0x93d8bd939cf2ffb69bd1b90fb79708c018643a9f' // MKR/DAI Uniswap data fed
 ]
 
 const FUTARCHY_SETTINGS = [
