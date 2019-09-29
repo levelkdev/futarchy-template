@@ -12,7 +12,9 @@
     "deploy:staging": "npm run compile && truffle exec ./scripts/deploy.js --network rinkeby --ens 0x98df287b6c145399aaa709692c8d308357bc085d --dao-factory 0xbca2c99aa7018edcde60e6c5744f68003112535d --mini-me-factory 0xac443f983c38c02149ce2ffcff8b7de90dccf77c",
     "publish:rpc": "aragon apm publish major $(npm run deploy:rpc | tail -n 1) --environment default",
     "test": "npm run test:ganache",
-    "test:ganache": "./node_modules/dao-templates/shared/scripts/test-ganache.sh"
+    "test:ganache": "./node_modules/dao-templates/shared/scripts/test-ganache.sh",
+    "devchain": "aragon devchain",
+    "devchain:reset": "aragon devchain --reset"
   },
   "files": [
     "abi/",
