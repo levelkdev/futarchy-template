@@ -2,8 +2,6 @@ const fs = require('fs')
 const { randomId } = require('dao-templates/shared/helpers/aragonId')
 const { numberToBytes32, addressToBytes32 } = require('../src/utils')
 
-const FutarchyTemplate = artifacts.require('FutarchyTemplate')
-
 const testAddr1 = '0x33329f5a360649eb1c473b998cf3b975feb109f6'
 const testAddr2 = '0x44360017c1460bc0149946b4fad97665c25586b0'
 
@@ -46,11 +44,24 @@ const FUTARCHY_SETTINGS = [
 
 const MEDIAN_PRICE_ORACLE_TIMEFRAME = 60 * 60 * 24
 
-module.exports = async (callback) => {
+module.exports = async (
+  callback,
+  {
+    network: _network,
+    web3: _web3,
+    artifacts: _artifacts,
+    templateAddress
+  } = {}
+) => {
   try {
-    const network = process.argv[5]
-    const { address: futarchyTemplateAddr } = getConfig(network)
-    const futarchyTemplate = await FutarchyTemplate.at(futarchyTemplateAddr)
+    if (!this.web3) web3 = _web3
+    if (!this.artifacts) artifacts = _artifacts
+
+    const network = _network || process.argv[5]
+    const futarchyTemplateAddress = templateAddress || getConfig(network).address
+
+    const FutarchyTemplate = artifacts.require('FutarchyTemplate')
+    const futarchyTemplate = await FutarchyTemplate.at(futarchyTemplateAddress)
 
     const daoID = randomId()
 
@@ -69,10 +80,16 @@ module.exports = async (callback) => {
     console.log('Deployed FutarchDAO:')
     console.log('  receipt.tx: ', receipt.tx)
     console.log('  receipt.logs: ', receipt.logs)
+
+    if (callback) {
+      callback()
+      return
+    } else {
+      return receipt
+    }
   } catch (err) {
     console.log('Error in scripts/newFutarchyDAO.js: ', err)
   }
-  callback()
 }
 
 function getConfig(network) {
