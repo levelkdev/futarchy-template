@@ -103,7 +103,7 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
 
     // deploy the Futarchy app with the MedianPriceOracleFactory set as it's price oracle. All decision
     // markets will be resolved with medianized price data from the OracleManager.
-    _setupFutarchyApp(dao, acl, voting, _futarchySettings, medianPriceOracleFactory);
+    _setupFutarchyApp(dao, acl, _futarchySettings, medianPriceOracleFactory);
 
     _transferRootPermissionsFromTemplateAndFinalizeDAO(dao, voting);
     _registerID(_id, dao);
@@ -146,14 +146,13 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
   function _setupFutarchyApp(
     Kernel _dao,
     ACL _acl,
-    Voting _voting,
     bytes32[7] _futarchySettings,
     MedianPriceOracleFactory _medianPriceOracleFactory
   )
     internal
   {
     Futarchy futarchy = _installFutarchyApp(_dao, _futarchySettings, _medianPriceOracleFactory);
-    _createFutarchyPermissions(_acl, futarchy, _voting, _voting);
+    _createFutarchyPermissions(_acl, futarchy, msg.sender, msg.sender);
   }
 
   function _setupOracleManagerApp(
