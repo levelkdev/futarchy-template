@@ -28,10 +28,18 @@ pull the [aragon/aragon](https://github.com/aragon/aragon) repo locally (the ara
 
 run `npm run compile`
 
-run `npm run devchain`
+run `npm run devchain:reset`
 
-run `npm run newFutarchyDAO:local` to deploy to local devchain
+deploy `github.com/levelkdev/futarchy-app`:
+  * `npm run deploy:lib_workaround:local`
+  * `aragon apm publish major --files dist`
 
-get the `registry` address from the `arapp_local.json` that will be generated
 
-from the `aragon/aragon` repo, run `export REACT_APP_ENS_REGISTRY_ADDRESS=<registry_address_from_arapp_local_json>; npm run start:local`
+deploy `github.com/levelkdev/oracle-manager-app`:
+  * `aragon apm publish major --files dist`
+
+run `npm run deploy:local` to deploy the template to the local devchain
+
+run `npm run newFutarchyDAO:local` to deploy a futarchy DAO to the local devchain
+
+from the `aragon/aragon` repo, run `npm run start:local`
