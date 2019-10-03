@@ -54,7 +54,7 @@
     "@aragon/os": "4.2.0",
     "@aragon/templates-shared": "^1.0.0-rc.1",
     "dao-templates": "github:levelkdev/dao-templates#0689784662997787cf695042f2968032a30ef765",
-    "futarchy-app": "github:levelkdev/futarchy-app#2a604ca5584ff1156d75163403660b6dfd781414",
+    "futarchy-app": "github:levelkdev/futarchy-app#4e161cb21fcd607125a89370ab66b9eeba86b244",
     "oracle-manager-app": "github:levelkdev/oracle-manager-app#29dcccd12fe74c44dabac6688f6a1611ee88ff80"
   }
 }
