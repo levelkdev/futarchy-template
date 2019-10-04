@@ -5,7 +5,6 @@ import "futarchy-app/contracts/Oracles/MedianPriceOracleFactory.sol";
 import "oracle-manager-app/contracts/OracleManager.sol";
 import "@aragon/templates-shared/contracts/TokenCache.sol";
 import "@aragon/templates-shared/contracts/BaseTemplate.sol";
-import "./MedianPriceOracleFactoryProxy.sol";
 
 contract FutarchyTemplate is BaseTemplate, TokenCache {
 
@@ -25,7 +24,7 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
   uint8 constant private TOKEN_DECIMALS = uint8(18);
   uint256 constant private TOKEN_MAX_PER_ACCOUNT = uint256(0);
 
-  MedianPriceOracleFactory public medianPriceOracleFactoryMaster;
+  MedianPriceOracleFactory public medianPriceOracleFactoryProxied;
 
   constructor(
     DAOFactory _daoFactory,
@@ -39,7 +38,7 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
     _ensureAragonIdIsValid(_aragonID);
     _ensureMiniMeFactoryIsValid(_miniMeFactory);
 
-    medianPriceOracleFactoryMaster = new MedianPriceOracleFactory(address(0), 0);
+    medianPriceOracleFactoryProxied = new MedianPriceOracleFactory();
   }
 
   /**
@@ -235,9 +234,9 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
   {
     MedianPriceOracleFactory medianPriceOracleFactory = MedianPriceOracleFactory(
       new MedianPriceOracleFactoryProxy(
+        address(medianPriceOracleFactoryProxied),
         address(_oracleManager),
-        _medianPriceOracleTimeframe,
-        address(medianPriceOracleFactoryMaster)
+        _medianPriceOracleTimeframe
       )
     );
     emit MedianPriceOracleFactoryDeployed(medianPriceOracleFactory);

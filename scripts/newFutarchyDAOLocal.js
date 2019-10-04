@@ -1,11 +1,10 @@
-const fs = require('fs')
 const { randomId } = require('dao-templates/shared/helpers/aragonId')
 const { numberToBytes32, addressToBytes32 } = require('../src/utils')
 
-const testAddr1 = '0x33329f5a360649eb1c473b998cf3b975feb109f6'
-const testAddr2 = '0x44360017c1460bc0149946b4fad97665c25586b0'
+const futarchyTemplateAddress = '0xfe18bcbedd6f46e0dfbb3aea02090f23ed1c4a28'
 
-const rinkebyDaiAddr = '0x5592ec0cfb4dbc12d3ab100b257153436a1f0fea'
+const testAddr1 = '0xb4124cEB3451635DAcedd11767f004d8a28c6eE7'
+const testAddr2 = '0x8401Eb5ff34cc943f096A32EF3d5113FEbE8D4Eb'
 
 const HOLDERS = [testAddr1, testAddr2]
 const STAKES = HOLDERS.map(() => 1e18 * 100)
@@ -24,22 +23,11 @@ const FUTARCHY_FEE = 2000
 const FUTARCHY_TRADING_PERIOD = 60 * 60 * 24 * 7
 const FUTARCHY_TIME_TO_PRICE_RESOLUTION = FUTARCHY_TRADING_PERIOD * 2
 const FUTARCHY_MARKET_FUND_AMOUNT = 1e18 / 10
-const FUTARCHY_TOKEN = rinkebyDaiAddr
-const FUTARCHY_ORACLE_FACTORY = '0x295a3fd6d110cd26ecc8ae573577a2f43d5f2ad0'
-const LMSR_MARKET_MAKER = '0xc9e30a6739329fcaa9ec55e4c712bc5c634e4ba9'
+const FUTARCHY_ORACLE_FACTORY = '0x1fad5ae333ef73ea9810bf90846cadbaabb72a36'
+const LMSR_MARKET_MAKER = '0x5995f896899256ac9496d17a03125b2ea3df34a4'
 
 const ORACLE_MANAGER_DATA_FEED_SOURCES = [
   '0x93d8bd939cf2ffb69bd1b90fb79708c018643a9f' // MKR/DAI Uniswap data fed
-]
-
-const FUTARCHY_SETTINGS = [
-  numberToBytes32(FUTARCHY_FEE),
-  numberToBytes32(FUTARCHY_TRADING_PERIOD),
-  numberToBytes32(FUTARCHY_TIME_TO_PRICE_RESOLUTION),
-  numberToBytes32(FUTARCHY_MARKET_FUND_AMOUNT),
-  addressToBytes32(FUTARCHY_TOKEN),
-  addressToBytes32(FUTARCHY_ORACLE_FACTORY),
-  addressToBytes32(LMSR_MARKET_MAKER)
 ]
 
 const MEDIAN_PRICE_ORACLE_TIMEFRAME = 60 * 60 * 24
@@ -47,21 +35,35 @@ const MEDIAN_PRICE_ORACLE_TIMEFRAME = 60 * 60 * 24
 module.exports = async (
   callback,
   {
-    network: _network,
     web3: _web3,
-    artifacts: _artifacts,
-    templateAddress
+    artifacts: _artifacts
   } = {}
 ) => {
   try {
     if (!this.web3) web3 = _web3
     if (!this.artifacts) artifacts = _artifacts
 
-    const network = _network || process.argv[5]
-    const futarchyTemplateAddress = templateAddress || getConfig(network).address
-
     const FutarchyTemplate = artifacts.require('FutarchyTemplate')
+    const LocalToken = artifacts.require('LocalToken')
+
     const futarchyTemplate = await FutarchyTemplate.at(futarchyTemplateAddress)
+
+    const localToken = await LocalToken.new()
+    console.log('Deployed LocalToken: ', localToken.address)
+    await localToken.mint(testAddr1, 10000 * 10**18)
+    console.log(`Minted ${10000 * 10**18} LocalToken to ${testAddr1}`)
+    await localToken.mint(testAddr2, 10000 * 10**18)
+    console.log(`Minted ${10000 * 10**18} LocalToken to ${testAddr2}`)
+
+    const FUTARCHY_SETTINGS = [
+      numberToBytes32(FUTARCHY_FEE),
+      numberToBytes32(FUTARCHY_TRADING_PERIOD),
+      numberToBytes32(FUTARCHY_TIME_TO_PRICE_RESOLUTION),
+      numberToBytes32(FUTARCHY_MARKET_FUND_AMOUNT),
+      addressToBytes32(localToken.address),
+      addressToBytes32(FUTARCHY_ORACLE_FACTORY),
+      addressToBytes32(LMSR_MARKET_MAKER)
+    ]
 
     const daoID = randomId()
 
@@ -89,28 +91,5 @@ module.exports = async (
     }
   } catch (err) {
     console.log('Error in scripts/newFutarchyDAO.js: ', err)
-  }
-}
-
-function getConfig(network) {
-  const envMap = {
-    'rinkeby': 'staging',
-    'mainnet': 'production'
-  }
-  const environment = envMap[network]
-
-  if (!environment) throw new Error(`No environment for network ${network}`)
-
-  let arapp
-  try {
-    let contents = fs.readFileSync(`arapp.json`)
-    arapp = JSON.parse(contents)
-  } catch (err) {
-    throw new Error('No existing arapp.json file found')
-  }
-  if (arapp.environments && arapp.environments[environment]) {
-    return arapp.environments[environment]
-  } else {
-    throw new Error(`No environment ${environment} found in arapp.json`)
   }
 }
