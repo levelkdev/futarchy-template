@@ -38,7 +38,7 @@ deploy `github.com/levelkdev/futarchy-app`:
 deploy `github.com/levelkdev/oracle-manager-app`:
   * `aragon apm publish major --files dist`
 
-run `npm run deploy:local` to deploy the template to the local devchain
+run `npm run deploy:rpc` to deploy the template to the local devchain
 
 run `npm run newFutarchyDAO:local` to deploy a futarchy DAO to the local devchain
 
