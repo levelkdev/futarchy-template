@@ -50,7 +50,7 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
   * @param _holders Array of token holder addresses
   * @param _stakes Array of token stakes for holders (token has 18 decimals, multiply token amount `* 10^18`)
   * @param _votingSettings Array of [supportRequired, minAcceptanceQuorum, voteDuration] to set up the voting app of the organization
-  * @param _futarchySettings Array of [futarchyFee, futarchyTradingPeriod, futarchyTimeToPriceResolution, futarchyMarketFundAmount, futarchyToken, futarchyOracleFactory, lmsrMarketMaker] to set up the futarchy app of the organization
+  * @param _futarchySettings Array of [futarchyFee, futarchyTradingPeriod, futarchyTimeToPriceResolution, futarchyMarketFundAmount, futarchyToken, IDecisionMarketsFactory, lmsrMarketMaker] to set up the futarchy app of the organization
   * @param _medianPriceOracleTimeframe Timeframe when median price will be calculated for futarchy market resolution. Medianizing of price data starts at ((startDate + futarchyTimeToPriceResolution) - _medianPriceOracleTimeframe) and ends at (startDate + futarchyTimeToPriceResolution), where "startDate" is futarchy market creation time.
   */
   function newTokenAndInstance(
@@ -76,7 +76,7 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
   * @param _holders Array of token holder addresses
   * @param _stakes Array of token stakes for holders (token has 18 decimals, multiply token amount `* 10^18`)
   * @param _votingSettings Array of [supportRequired, minAcceptanceQuorum, voteDuration] to set up the voting app of the organization
-  * @param _futarchySettings Array of [futarchyFee, futarchyTradingPeriod, futarchyTimeToPriceResolution, futarchyMarketFundAmount, futarchyToken, futarchyOracleFactory, lmsrMarketMaker] to set up the futarchy app of the organization
+  * @param _futarchySettings Array of [futarchyFee, futarchyTradingPeriod, futarchyTimeToPriceResolution, futarchyMarketFundAmount, futarchyToken, IDecisionMarketsFactory, lmsrMarketMaker] to set up the futarchy app of the organization
   */
   function newInstance(
     string memory _id,
@@ -183,7 +183,7 @@ contract FutarchyTemplate is BaseTemplate, TokenCache {
       uint(_futarchySettings[2]), // timeToPriceResolution
       uint(_futarchySettings[3]), // marketFundAmount
       ERC20Gnosis(address(_futarchySettings[4])), // token
-      FutarchyOracleFactory(address(_futarchySettings[5])), // futarchyOracleFactory
+      IDecisionMarketsFactory(address(_futarchySettings[5])), // decisionMarketsFactory
       IScalarPriceOracleFactory(_medianPriceOracleFactory), // priceOracleFactory
       LMSRMarketMaker(address(_futarchySettings[6])) // lmsrMarketMaker
     );
