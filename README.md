@@ -32,11 +32,11 @@ run `npm run devchain:reset`
 
 deploy `github.com/levelkdev/futarchy-app`:
   * `npm run deploy:lib_workaround:local`
-  * `aragon apm publish major --files dist`
+  * `aragon apm publish major --files dist --environment local`
 
 
 deploy `github.com/levelkdev/oracle-manager-app`:
-  * `aragon apm publish major --files dist`
+  * `aragon apm publish major --files dist --environment local`
 
 run `npm run deploy:rpc` to deploy the template to the local devchain
 

@@ -1,7 +1,7 @@
 const { randomId } = require('dao-templates/shared/helpers/aragonId')
 const { numberToBytes32, addressToBytes32 } = require('../src/utils')
 
-const futarchyTemplateAddress = '0xfe18bcbedd6f46e0dfbb3aea02090f23ed1c4a28'
+const futarchyTemplateAddress = '0x4d97bd8efacf46b33c4438ed0b7b6aabfa2359fb'
 
 const testAddr1 = '0xb4124cEB3451635DAcedd11767f004d8a28c6eE7'
 const testAddr2 = '0x8401Eb5ff34cc943f096A32EF3d5113FEbE8D4Eb'
@@ -23,11 +23,11 @@ const FUTARCHY_FEE = 2000
 const FUTARCHY_TRADING_PERIOD = 60 * 60 * 24 * 7
 const FUTARCHY_TIME_TO_PRICE_RESOLUTION = FUTARCHY_TRADING_PERIOD * 2
 const FUTARCHY_MARKET_FUND_AMOUNT = 1e18 / 10
-const FUTARCHY_ORACLE_FACTORY = '0x1fad5ae333ef73ea9810bf90846cadbaabb72a36'
-const LMSR_MARKET_MAKER = '0x5995f896899256ac9496d17a03125b2ea3df34a4'
 
 const ORACLE_MANAGER_DATA_FEED_SOURCES = [
-  '0x93d8bd939cf2ffb69bd1b90fb79708c018643a9f' // MKR/DAI Uniswap data fed
+   // Mock token price data feed
+   // deployed in token-price-oracles with `npm run deploy:local`
+  '0xf21d29fbcee9d9ed579e2e7462c450edd67b453e'
 ]
 
 const MEDIAN_PRICE_ORACLE_TIMEFRAME = 60 * 60 * 24
@@ -45,8 +45,48 @@ module.exports = async (
 
     const FutarchyTemplate = artifacts.require('FutarchyTemplate')
     const LocalToken = artifacts.require('LocalToken')
+    const Fixed192x64Math = artifacts.require('Fixed192x64Math')
+    const LMSRMarketMaker = artifacts.require('LMSRMarketMaker')
+    const CategoricalEvent = artifacts.require('CategoricalEvent')
+    const ScalarEvent = artifacts.require('ScalarEvent')
+    const OutcomeToken = artifacts.require('OutcomeToken')
+    const SettableDecisionMarkets = artifacts.require('SettableDecisionMarkets')
+    const StandardMarketWithPriceLogger = artifacts.require('StandardMarketWithPriceLogger')
+    const EventFactory = artifacts.require('EventFactory')
+    const StandardMarketWithPriceLoggerFactory = artifacts.require('StandardMarketWithPriceLoggerFactory')
+    const DecisionMarketsFactory = artifacts.require('DecisionMarketsFactory')
 
     const futarchyTemplate = await FutarchyTemplate.at(futarchyTemplateAddress)
+
+    const fixed192x64Math = await Fixed192x64Math.new()
+    await LMSRMarketMaker.link('Fixed192x64Math', fixed192x64Math.address)
+    const lmsrMarketMaker = await LMSRMarketMaker.new()
+    console.log(`Deployed LMSRMarketMaker: ${lmsrMarketMaker.address}`)
+
+    const categoricalEvent = await CategoricalEvent.new()
+    const scalarEvent = await ScalarEvent.new()
+    const outcomeToken = await OutcomeToken.new()
+    const eventFactory = await EventFactory.new(
+      categoricalEvent.address,
+      scalarEvent.address,
+      outcomeToken.address
+    )
+    console.log(`Deployed EventFactory: ${eventFactory.address}`)
+
+    const standardMarketWithPriceLogger = await StandardMarketWithPriceLogger.new()
+    const standardMarketWithPriceLoggerFactory = await StandardMarketWithPriceLoggerFactory.new(
+      standardMarketWithPriceLogger.address
+    )
+    console.log(`Deployed StandardMarketWithPriceLoggerFactory:  ${standardMarketWithPriceLoggerFactory.address}`)
+
+    const settableDecisionMarkets = await SettableDecisionMarkets.new()
+    const decisionMarketsFactory = await DecisionMarketsFactory.new(
+      settableDecisionMarkets.address,
+      eventFactory.address,
+      standardMarketWithPriceLoggerFactory.address
+    )
+    console.log(`Deployed DecisionMarketsFactory ${decisionMarketsFactory.address}`)
+    console.log('')
 
     const localToken = await LocalToken.new()
     console.log('Deployed LocalToken: ', localToken.address)
@@ -54,6 +94,7 @@ module.exports = async (
     console.log(`Minted ${10000 * 10**18} LocalToken to ${testAddr1}`)
     await localToken.mint(testAddr2, 10000 * 10**18)
     console.log(`Minted ${10000 * 10**18} LocalToken to ${testAddr2}`)
+    console.log('')
 
     const FUTARCHY_SETTINGS = [
       numberToBytes32(FUTARCHY_FEE),
@@ -61,8 +102,8 @@ module.exports = async (
       numberToBytes32(FUTARCHY_TIME_TO_PRICE_RESOLUTION),
       numberToBytes32(FUTARCHY_MARKET_FUND_AMOUNT),
       addressToBytes32(localToken.address),
-      addressToBytes32(FUTARCHY_ORACLE_FACTORY),
-      addressToBytes32(LMSR_MARKET_MAKER)
+      addressToBytes32(decisionMarketsFactory.address),
+      addressToBytes32(lmsrMarketMaker.address)
     ]
 
     const daoID = randomId()
