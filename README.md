@@ -43,3 +43,9 @@ run `npm run deploy:rpc` to deploy the template to the local devchain
 run `npm run newFutarchyDAO:local` to deploy a futarchy DAO to the local devchain
 
 from the `aragon/aragon` repo, run `npm run start:local`
+
+### Set Decision
+
+Use this script to set a decision to YES or NO
+
+`npm run setDecision:local <futarchyAppAddress> <decisionID> <YES||NO>`

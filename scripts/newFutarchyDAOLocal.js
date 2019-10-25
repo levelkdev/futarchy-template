@@ -20,8 +20,14 @@ const SUPPORT_REQUIRED = 1e16
 const MIN_ACCEPTANCE_QUORUM = 1e16
 const VOTING_SETTINGS = [SUPPORT_REQUIRED, MIN_ACCEPTANCE_QUORUM, VOTE_DURATION]
 const FUTARCHY_FEE = 2000
-const FUTARCHY_TRADING_PERIOD = 60 * 60 * 24 * 7
-const FUTARCHY_TIME_TO_PRICE_RESOLUTION = FUTARCHY_TRADING_PERIOD * 2
+
+// setting to 1 so decisionResolutionDate is immediately passed,
+// allowing us to set the decision at any time
+const FUTARCHY_TRADING_PERIOD = 1
+
+// setting to 30 days total market time
+const FUTARCHY_TIME_TO_PRICE_RESOLUTION = 60 * 60 * 24 * 30 // 30 days
+
 const FUTARCHY_MARKET_FUND_AMOUNT = 1e18 / 10
 
 const ORACLE_MANAGER_DATA_FEED_SOURCES = [

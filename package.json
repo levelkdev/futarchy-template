@@ -16,7 +16,7 @@
     "test:ganache": "./node_modules/dao-templates/shared/scripts/test-ganache.sh",
     "devchain": "aragon devchain",
     "devchain:reset": "aragon devchain --reset",
-    "tst": "truffle exec ./scripts/tmpFactoryTest.js --network rpc"
+    "setDecision:local": "truffle exec ./scripts/setDecision.js --network rpc"
   },
   "files": [
     "abi/",
