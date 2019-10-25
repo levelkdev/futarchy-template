@@ -21,10 +21,6 @@ module.exports = async (
     const decisionId = process.argv[7]
     const decisionResult = resultText == 'YES' ? 0 : 1
 
-    console.log('futarchy app: ', futarchyAppAddress)
-    console.log('DecisionID: ', decisionId)
-    console.log('Result: ', decisionResult)
-
     const futarchyApp = Futarchy.at(futarchyAppAddress)
     const decisionMarketsAddress = (await futarchyApp.decisions(decisionId))[0]
     if (decisionMarketsAddress == '0x0000000000000000000000000000000000000000') {
