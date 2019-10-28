@@ -1,13 +1,15 @@
 const { randomId } = require('dao-templates/shared/helpers/aragonId')
 const { numberToBytes32, addressToBytes32 } = require('../src/utils')
 
-const futarchyTemplateAddress = '0x4d97bd8efacf46b33c4438ed0b7b6aabfa2359fb'
+const futarchyTemplateAddress = '0x2e25c8f88c5cccbc9400e5bc86cf9c58c7604327'
 
 const testAddr1 = '0xb4124cEB3451635DAcedd11767f004d8a28c6eE7'
 const testAddr2 = '0x8401Eb5ff34cc943f096A32EF3d5113FEbE8D4Eb'
 
 const HOLDERS = [testAddr1, testAddr2]
-const STAKES = HOLDERS.map(() => 1e18 * 100)
+
+// DAO native tokens (AFSMT):
+const STAKES = HOLDERS.map(() => 1 * 1e18)
 
 const TOKEN_NAME = 'AragonFutarchySignalingMarketToken'
 const TOKEN_SYMBOL = 'AFSMT'
@@ -19,7 +21,7 @@ const VOTE_DURATION = ONE_WEEK
 const SUPPORT_REQUIRED = 1e16
 const MIN_ACCEPTANCE_QUORUM = 1e16
 const VOTING_SETTINGS = [SUPPORT_REQUIRED, MIN_ACCEPTANCE_QUORUM, VOTE_DURATION]
-const FUTARCHY_FEE = 2000
+const FUTARCHY_FEE = 0
 
 // setting to 1 so decisionResolutionDate is immediately passed,
 // allowing us to set the decision at any time
@@ -28,15 +30,17 @@ const FUTARCHY_TRADING_PERIOD = 1
 // setting to 30 days total market time
 const FUTARCHY_TIME_TO_PRICE_RESOLUTION = 60 * 60 * 24 * 30 // 30 days
 
-const FUTARCHY_MARKET_FUND_AMOUNT = 1e18 / 10
+const FUTARCHY_MARKET_FUND_AMOUNT = 100 * 1e18
 
 const ORACLE_MANAGER_DATA_FEED_SOURCES = [
    // Mock token price data feed
    // deployed in token-price-oracles with `npm run deploy:local`
-  '0xf21d29fbcee9d9ed579e2e7462c450edd67b453e'
+  '0x3949c4d6212781f7cb55fb69c0ae9d07eae14098'
 ]
 
 const MEDIAN_PRICE_ORACLE_TIMEFRAME = 60 * 60 * 24
+
+const COLLATERAL_TOKEN_MINT_AMOUNT = 10000 * 1e18
 
 module.exports = async (
   callback,
@@ -96,10 +100,10 @@ module.exports = async (
 
     const localToken = await LocalToken.new()
     console.log('Deployed LocalToken: ', localToken.address)
-    await localToken.mint(testAddr1, 10000 * 10**18)
-    console.log(`Minted ${10000 * 10**18} LocalToken to ${testAddr1}`)
-    await localToken.mint(testAddr2, 10000 * 10**18)
-    console.log(`Minted ${10000 * 10**18} LocalToken to ${testAddr2}`)
+    await localToken.mint(testAddr1, COLLATERAL_TOKEN_MINT_AMOUNT)
+    console.log(`Minted ${COLLATERAL_TOKEN_MINT_AMOUNT} LocalToken to ${testAddr1}`)
+    await localToken.mint(testAddr2, COLLATERAL_TOKEN_MINT_AMOUNT)
+    console.log(`Minted ${COLLATERAL_TOKEN_MINT_AMOUNT} LocalToken to ${testAddr2}`)
     console.log('')
 
     const FUTARCHY_SETTINGS = [

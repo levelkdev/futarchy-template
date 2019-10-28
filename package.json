@@ -16,7 +16,11 @@
     "test:ganache": "./node_modules/dao-templates/shared/scripts/test-ganache.sh",
     "devchain": "aragon devchain",
     "devchain:reset": "aragon devchain --reset",
-    "setDecision:local": "truffle exec ./scripts/setDecision.js --network rpc"
+    "setDecision:local": "truffle exec ./scripts/setDecision.js --network rpc",
+    "resolvePrice:local": "truffle exec ./scripts/resolvePrice.js --network rpc",
+    "closeDecision:local": "truffle exec ./scripts/closeDecision.js --network rpc",
+    "decisionReport:local": "truffle exec ./scripts/decisionReport.js --network rpc",
+    "oracleManagerReport:local": "truffle exec ./scripts/oracleManagerReport.js --network rpc"
   },
   "files": [
     "abi/",
@@ -37,6 +41,7 @@
     "ganache-cli": "6.5.1",
     "lerna": "^3.0.0",
     "lodash": "^4.17.15",
+    "moment": "^2.24.0",
     "truffle": "4.1.14",
     "truffle-extract": "1.2.1",
     "truffle-hdwallet-provider": "0.0.3",
@@ -54,7 +59,7 @@
     "@aragon/os": "4.2.0",
     "@aragon/templates-shared": "^1.0.0-rc.1",
     "dao-templates": "github:levelkdev/dao-templates#0689784662997787cf695042f2968032a30ef765",
-    "futarchy-app": "github:levelkdev/futarchy-app#252840e78a3290df57e693149a8bdeae6d75ead7",
-    "oracle-manager-app": "github:levelkdev/oracle-manager-app#29dcccd12fe74c44dabac6688f6a1611ee88ff80"
+    "futarchy-app": "github:levelkdev/futarchy-app#5b283e349900537457dc317580a392c77c079d53",
+    "oracle-manager-app": "github:levelkdev/oracle-manager-app#6661ce6ff2dda225d3ed89a3c9a187f5173d08f4"
   }
 }

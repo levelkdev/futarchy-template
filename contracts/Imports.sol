@@ -2,6 +2,8 @@ pragma solidity 0.4.24;
 
 // HACK to workaround truffle artifact loading on dependencies
 
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
+import "token-price-oracles/contracts/DataFeeds/TokenPriceDataFeed.sol";
 import "futarchy-app/contracts/DecisionMarkets/DecisionMarketsFactory.sol";
 import "futarchy-app/contracts/DecisionMarkets/SettableDecisionMarkets.sol";
 import "@aragon/os/contracts/factory/ENSFactory.sol";
