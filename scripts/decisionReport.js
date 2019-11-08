@@ -62,11 +62,11 @@ module.exports = async (
     const resolutionDate = (await medianPriceOracle.resolutionDate()).toNumber()
     const medianStartDate = (await medianPriceOracle.medianStartDate()).toNumber()
     const medianPriceOutcomeSet = await medianPriceOracle.isOutcomeSet()
-    const medianPriceOutcome = (await medianPriceOracle.outcome()).toNumber()
+    const medianPriceOutcome = (await medianPriceOracle.getOutcome()).toNumber()
     console.log(`MedianPriceOracle:<${medianPriceOracle.address}>`)
     console.log(`  resolutionDate: ${verboseBlocktime(resolutionDate)}`)
     console.log(`  medianStartDate: ${verboseBlocktime(medianStartDate)}`)
-    console.log(`  Median Price Outcome: ${medianPriceOutcomeSet ? medianPriceOutcome : 'Not set'}`)
+    console.log(`  Median Price Outcome: ${medianPriceOutcomeSet ? medianPriceOutcome / 10**18 : 'Not set'}`)
     console.log()
     
     const timeMedianDataFeed = TimeMedianDataFeed.at(await medianPriceOracle.medianDataFeed())
