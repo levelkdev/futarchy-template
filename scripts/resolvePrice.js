@@ -50,20 +50,48 @@ module.exports = async (
     }
 
     const resolutionDate = (await medianPriceOracle.resolutionDate()).toNumber()
+    const medianStartDate = (await medianPriceOracle.medianStartDate()).toNumber()
     const now = (await web3.eth.getBlock('latest')).timestamp
     if (resolutionDate >= now) {
       throw new Error(`Resolution date ${verboseBlocktime(resolutionDate)} has not passed current blocktime ${verboseBlocktime(now)}`)
     }
     
-    // IN PROGRESS: when res date has passed, get the valid start/end indeces
-    
     const timeMedianDataFeed = TimeMedianDataFeed.at(await medianPriceOracle.medianDataFeed())
     const results = await getAllResults(timeMedianDataFeed)
-    console.log('RESULTS: ', results)
+
+    const validRange = getValidRange(results, resolutionDate, medianStartDate)
+    const isValidRange = await medianPriceOracle.isValidRange(validRange[0], validRange[1])
+    if (!isValidRange) {
+      throw new Error(`Calculated range [${validRange[0]}, ${validRange[1]}] was not valid`)
+    }
+
+    console.log(`Setting outcome for MedianPriceOracle:<${medianPriceOracle.address}> from startIndex:${validRange[0]} to endIndex:${validRange[1]}`)
+    const setOutcomeTx = await medianPriceOracle.setOutcome(validRange[0], validRange[1])
+    console.log('tx: ', setOutcomeTx.tx)
+    console.log('')
+
+    const outcome = (await medianPriceOracle.getOutcome()).toNumber()
+    console.log(`MedianPriceOracle:<${medianPriceOracle.address}> outcome: ${outcome}`)
+    console.log('')
 
   } catch (err) {
     console.log('Error in scripts/resolvePrice.js: ', err)
   }
+}
+
+// TODO: handle edge case where no results were logged
+function getValidRange (_results, _resolutionDate, _medianStartDate) {
+  let lowerBound, upperBound
+  for (var i in _results) {
+    const result = _results[i]
+    if (result.date > _medianStartDate && !lowerBound) {
+      lowerBound = result.index
+    }
+    if (result.date > _resolutionDate && !upperBound) {
+      upperBound = result.index - 1
+    }
+  }
+  return [lowerBound, upperBound]
 }
 
 async function getAllResults(_timeMedianDataFeed) {
