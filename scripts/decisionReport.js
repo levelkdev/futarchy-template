@@ -69,6 +69,11 @@ module.exports = async (
     }
 
     const yesMarket = Market.at(await settableDecisionMarkets.getMarketByIndex(0))
+    const noMarket = Market.at(await settableDecisionMarkets.getMarketByIndex(1))
+    console.log('YES Market Stage: ', getMarketStageText((await yesMarket.stage()).toNumber()))
+    console.log('NO Market Stage: ', getMarketStageText((await noMarket.stage()).toNumber()))
+    console.log()
+
     const yesEvent = Event.at(await yesMarket.eventContract())
     const medianPriceOracle = MedianPriceOracle.at(await yesEvent.oracle())
     const resolutionDate = (await medianPriceOracle.resolutionDate()).toNumber()
@@ -177,4 +182,18 @@ function logDecisionState (decision) {
   console.log(` executionScript: ${executionScript}`)
   console.log(` decisionCreator: ${decisionCreator}`)
   console.log(` token: ${token}`)
+}
+
+function getMarketStageText (marketStage) {
+  // https://github.com/gnosis/pm-contracts/blob/095d7bdd4ed1eb6809dfc9e3990410499b0aec82/contracts/Markets/Market.sol#L31
+  //
+  // enum Stages {
+  //   MarketCreated,
+  //   MarketFunded,
+  //   MarketClosed
+  // }
+  //
+
+  const marketStages = ['MarketCreated', 'MarketFunded', 'MarketClosed']
+  return marketStages[marketStage]
 }
