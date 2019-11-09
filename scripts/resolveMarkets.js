@@ -44,36 +44,50 @@ module.exports = async (
 
     const medianPriceOracle = MedianPriceOracle.at(await winningEvent.oracle())
     const priceOutcomeSet = await medianPriceOracle.isOutcomeSet()
-    if (priceOutcomeSet) {
-      const priceOutcome = await medianPriceOracle.getOutcome()
-      throw new Error(`Price outcome already set to ${priceOutcome.toNumber()}`)
-    }
 
-    const resolutionDate = (await medianPriceOracle.resolutionDate()).toNumber()
-    const medianStartDate = (await medianPriceOracle.medianStartDate()).toNumber()
-    const now = (await web3.eth.getBlock('latest')).timestamp
-    if (resolutionDate >= now) {
-      throw new Error(`Resolution date ${verboseBlocktime(resolutionDate)} has not passed current blocktime ${verboseBlocktime(now)}`)
-    }
-    
-    const timeMedianDataFeed = TimeMedianDataFeed.at(await medianPriceOracle.medianDataFeed())
-    const results = await getAllResults(timeMedianDataFeed)
+    if (!priceOutcomeSet) {
+      // if the price outcome has not been set for the oracle that these decision
+      // markets use (an instance of MedianPriceOracle), find the valid result indeces
+      // for the oracle and set the final price outcome.
 
-    const validRange = getValidRange(results, resolutionDate, medianStartDate)
-    const isValidRange = await medianPriceOracle.isValidRange(validRange[0], validRange[1])
-    if (!isValidRange) {
-      throw new Error(`Calculated range [${validRange[0]}, ${validRange[1]}] was not valid`)
-    }
+      const resolutionDate = (await medianPriceOracle.resolutionDate()).toNumber()
+      const medianStartDate = (await medianPriceOracle.medianStartDate()).toNumber()
+      const now = (await web3.eth.getBlock('latest')).timestamp
+      if (resolutionDate >= now) {
+        throw new Error(`Resolution date ${verboseBlocktime(resolutionDate)} has not passed current blocktime ${verboseBlocktime(now)}`)
+      }
+      
+      const timeMedianDataFeed = TimeMedianDataFeed.at(await medianPriceOracle.medianDataFeed())
+      const results = await getAllResults(timeMedianDataFeed)
 
-    console.log(`Setting outcome for MedianPriceOracle:<${medianPriceOracle.address}> from startIndex:${validRange[0]} to endIndex:${validRange[1]}`)
-    const setOutcomeTx = await medianPriceOracle.setOutcome(validRange[0], validRange[1])
-    console.log('tx: ', setOutcomeTx.tx)
-    console.log('')
+      const validRange = getValidRange(results, resolutionDate, medianStartDate)
+      const isValidRange = await medianPriceOracle.isValidRange(validRange[0], validRange[1])
+      if (!isValidRange) {
+        throw new Error(`Calculated range [${validRange[0]}, ${validRange[1]}] was not valid`)
+      }
+
+      console.log(`Setting outcome for MedianPriceOracle:<${medianPriceOracle.address}> from startIndex:${validRange[0]} to endIndex:${validRange[1]}`)
+      const setOutcomeTx = await medianPriceOracle.setOutcome(validRange[0], validRange[1])
+      console.log('tx: ', setOutcomeTx.tx)
+      console.log('')
+    }
 
     const outcome = (await medianPriceOracle.getOutcome()).toNumber()
-    console.log(`MedianPriceOracle:<${medianPriceOracle.address}> outcome: ${outcome}`)
+    console.log(`MedianPriceOracle:<${medianPriceOracle.address}> outcome: ${outcome/10**18}`)
     console.log('')
 
+    const marketStage = (await winningMarket.stage()).toNumber()
+
+    if (marketStage !== 2) {
+      console.log(`Calling Futarchy.transitionDecision(${decisionId}) to resolve markets with final price outcome...`)
+      const transitionDecisionTx = await futarchyApp.transitionDecision(decisionId)
+      console.log('Decision transitioned: ', transitionDecisionTx.tx)
+      console.log()
+
+      const finalMarketStage = (await winningMarket.stage()).toNumber()
+      logFinalMarketStage(finalMarketStage)
+      console.log()
+    }
   } catch (err) {
     console.log('Error in scripts/resolvePrice.js: ', err)
   }
@@ -124,4 +138,18 @@ async function getAllResults(_timeMedianDataFeed) {
 
 function verboseBlocktime (_blocktime) {
   return `<${_blocktime} : ${formatDateTime.full(_blocktime)}>`
+}
+
+function logFinalMarketStage (marketStage) {
+  // https://github.com/gnosis/pm-contracts/blob/095d7bdd4ed1eb6809dfc9e3990410499b0aec82/contracts/Markets/Market.sol#L31
+  //
+  // enum Stages {
+  //   MarketCreated,
+  //   MarketFunded,
+  //   MarketClosed
+  // }
+  //
+
+  const marketStages = ['MarketCreated', 'MarketFunded', 'MarketClosed']
+  console.log('Final Market Stage: ', marketStages[marketStage])
 }

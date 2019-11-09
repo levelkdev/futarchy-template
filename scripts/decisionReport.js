@@ -18,6 +18,7 @@ module.exports = async (
     const MedianPriceOracle = artifacts.require('MedianPriceOracle')
     const TimeMedianDataFeed = artifacts.require('TimeMedianDataFeed')
     const SettableDecisionMarkets = artifacts.require('SettableDecisionMarkets')
+    const ERC20Gnosis = artifacts.require('ERC20Gnosis')
 
     const futarchyAppAddress = process.argv[6]
     const decisionId = process.argv[7]
@@ -32,10 +33,21 @@ module.exports = async (
     console.log('')
 
     const futarchyApp = Futarchy.at(futarchyAppAddress)
-    const decisionMarketsAddress = (await futarchyApp.decisions(decisionId))[0]
+    const decision = await futarchyApp.decisions(decisionId)
+    const decisionMarketsAddress = decision[0]
     if (decisionMarketsAddress == '0x0000000000000000000000000000000000000000') {
       throw new Error(`Decision ${decisionId} does not exist`)
     }
+
+    logDecisionState(decision)
+    console.log()
+
+    const token = ERC20Gnosis.at(decision[12])
+    const decisionCreator = decision[11]
+    const decisionCreatorBalance = (await token.balanceOf(decisionCreator)).toNumber()
+    console.log(`Collateral Token: ERC20:<${token.address}>`)
+    console.log(`  Decision Creator Balance: ${decisionCreator}: ${decisionCreatorBalance/10**18}`)
+    console.log()
 
     const settableDecisionMarkets = SettableDecisionMarkets.at(decisionMarketsAddress)
     const isOutcomeSet = await settableDecisionMarkets.isOutcomeSet()
@@ -57,6 +69,11 @@ module.exports = async (
     }
 
     const yesMarket = Market.at(await settableDecisionMarkets.getMarketByIndex(0))
+    const noMarket = Market.at(await settableDecisionMarkets.getMarketByIndex(1))
+    console.log('YES Market Stage: ', getMarketStageText((await yesMarket.stage()).toNumber()))
+    console.log('NO Market Stage: ', getMarketStageText((await noMarket.stage()).toNumber()))
+    console.log()
+
     const yesEvent = Event.at(await yesMarket.eventContract())
     const medianPriceOracle = MedianPriceOracle.at(await yesEvent.oracle())
     const resolutionDate = (await medianPriceOracle.resolutionDate()).toNumber()
@@ -118,4 +135,65 @@ async function getDataFeedResults(web3, _timeMedianDataFeed) {
 
 function verboseBlocktime (_blocktime) {
   return `<${_blocktime} : ${formatDateTime.full(_blocktime)}>`
+}
+
+function logDecisionState (decision) {
+  // IDecisionMarkets decisionMarkets;
+  // uint startDate;
+  // uint decisionResolutionDate;
+  // uint priceResolutionDate;
+  // int lowerBound;
+  // int upperBound;
+  // bool resolved;
+  // bool passed;
+  // bool executed;
+  // string metadata;
+  // bytes executionScript;
+  // address decisionCreator;
+  // ERC20Gnosis token;
+
+  const [
+    decisionMarkets,
+    startDate,
+    decisionResolutionDate,
+    priceResolutionDate,
+    lowerBound,
+    upperBound,
+    resolved,
+    passed,
+    executed,
+    metadata,
+    executionScript,
+    decisionCreator,
+    token
+  ] = decision
+
+  console.log('Decision State:')
+  console.log(` decisionMarkets: ${decisionMarkets}`)
+  console.log(` startDate: ${verboseBlocktime(startDate)}`)
+  console.log(` decisionResolutionDate: ${verboseBlocktime(decisionResolutionDate)}`)
+  console.log(` priceResolutionDate: ${verboseBlocktime(priceResolutionDate)}`)
+  console.log(` lowerBound: ${lowerBound.toNumber()/10**18}`)
+  console.log(` upperBound: ${upperBound.toNumber()/10**18}`)
+  console.log(` resolved?: ${resolved}`)
+  console.log(` passed?: ${passed}`)
+  console.log(` executed?: ${executed}`)
+  console.log(` metadata: ${metadata}`)
+  console.log(` executionScript: ${executionScript}`)
+  console.log(` decisionCreator: ${decisionCreator}`)
+  console.log(` token: ${token}`)
+}
+
+function getMarketStageText (marketStage) {
+  // https://github.com/gnosis/pm-contracts/blob/095d7bdd4ed1eb6809dfc9e3990410499b0aec82/contracts/Markets/Market.sol#L31
+  //
+  // enum Stages {
+  //   MarketCreated,
+  //   MarketFunded,
+  //   MarketClosed
+  // }
+  //
+
+  const marketStages = ['MarketCreated', 'MarketFunded', 'MarketClosed']
+  return marketStages[marketStage]
 }
