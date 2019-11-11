@@ -17,6 +17,7 @@
     "devchain": "aragon devchain",
     "devchain:reset": "aragon devchain --reset",
     "setDecision:local": "truffle exec ./scripts/setDecision.js --network rpc",
+    "newDecision:local": "truffle exec ./scripts/newDecision.js --network rpc",
     "resolveMarkets:local": "truffle exec ./scripts/resolveMarkets.js --network rpc",
     "decisionReport:local": "truffle exec ./scripts/decisionReport.js --network rpc",
     "oracleManagerReport:local": "truffle exec ./scripts/oracleManagerReport.js --network rpc"
