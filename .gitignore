@@ -6,3 +6,4 @@ flattened_contracts
 .node-xmlhttprequest-**
 secrets.json
 arapp_local.json
+abi
