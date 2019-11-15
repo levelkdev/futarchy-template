@@ -6,7 +6,7 @@ const { numberToBytes32, addressToBytes32 } = require('../src/utils')
 // const futarchyTemplateAddress = '0xc6A943c51667c09BB9a5D0d058F1eF0eD153fB47'
 
 // via `npm run deploy:staging`
-const futarchyTemplateAddress = '0x8d319c166fb6918cc0d7cab0b1bc2476be56c91e'
+const futarchyTemplateAddress = '0xb52b85b51dd2c50ceef135c03ac8a57e87cb999e'
 
 const daoTokenHolder1 = '0x33329f5a360649eb1c473b998cf3b975feb109f6'
 const daoTokenHolder2 = '0xb4124cEB3451635DAcedd11767f004d8a28c6eE7'
@@ -142,6 +142,8 @@ module.exports = async (
       ]
     )
 
+    console.log()
+
     const FUTARCHY_SETTINGS = [
       numberToBytes32(FUTARCHY_FEE),
       numberToBytes32(FUTARCHY_TRADING_PERIOD),
@@ -154,9 +156,17 @@ module.exports = async (
 
     const daoID = randomId()
 
-    const receipt = await futarchyTemplate.newTokenAndInstance(
+    const newTokenTxReceipt = await futarchyTemplate.newToken(
       TOKEN_NAME,
-      TOKEN_SYMBOL,
+      TOKEN_SYMBOL
+    )
+
+    console.log('Deployed FutarchyDAO token:')
+    console.log('  newTokenTxReceipt.tx: ', newTokenTxReceipt.tx)
+    console.log('  newTokenTxReceipt.logs: ', newTokenTxReceipt.logs)
+    console.log()
+
+    const newInstanceTxReceipt = await futarchyTemplate.newInstance(
       daoID,
       HOLDERS,
       STAKES,
@@ -166,9 +176,9 @@ module.exports = async (
       MEDIAN_PRICE_ORACLE_TIMEFRAME
     )
 
-    console.log('Deployed FutarchDAO:')
-    console.log('  receipt.tx: ', receipt.tx)
-    console.log('  receipt.logs: ', receipt.logs)
+    console.log('Deployed FutarchDAO instance:')
+    console.log('  newInstanceTxReceipt.tx: ', newInstanceTxReceipt.tx)
+    console.log('  newInstanceTxReceipt.logs: ', newInstanceTxReceipt.logs)
 
     if (callback) {
       callback()
