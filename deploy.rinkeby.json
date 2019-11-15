@@ -1,0 +1,15 @@
+{
+    "dependencyContracts": {
+        "Fixed192x64Math": "0xf1f52b25e96e035183dd1dd7b4e207c799101c43",
+        "LMSRMarketMaker": "0x072d421c63fe9620b23844d28c5fef78e4a46d3c",
+        "CategoricalEvent": "0x6b866faee6c33533371c2399fd40bf4d05bb389e",
+        "ScalarEvent": "0x630215b28816841e59f544da3a15b1258a065cbf",
+        "OutcomeToken": "0xc123cc5ecf5d19bc4c4975a58e95832ba2984455",
+        "EventFactory": "0x13f27101c88bb56a4731ef763a21d3318ba7ceec",
+        "StandardMarketWithPriceLogger": "0xcb7db7e5473b29d7179ce4d17bce352087525efb",
+        "StandardMarketWithPriceLoggerFactory": "0xfc88b9b71b8a4205cd6831a9d51ed88771a40c28",
+        "SettableDecisionMarkets": "0xe1d024ac3163c9ca09e11ff603aa772afe37aa18",
+        "DecisionMarketsFactory": "0xd50b0c5c3f58c17e3b91d86d56c57ed05930a11b",
+        "ANV5SignalingMarketCollateralToken": "0x482fa8854a9f94306c6f64067109f9380818c088"
+    }
+}
