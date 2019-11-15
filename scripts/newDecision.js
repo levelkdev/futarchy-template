@@ -24,7 +24,7 @@ module.exports = async (
     const priceFeed = TokenPriceDataFeed.at(priceFeedAddress)
 
     const currentPrice = bytes32ToNum(web3, await priceFeed.viewCurrentResult())
-    console.log(`TokenPriceDataFeed:<${priceFeed}>`)
+    console.log(`TokenPriceDataFeed:<${priceFeedAddress}>`)
     console.log(`  current price: ${currentPrice/10**18}`)
     console.log()
 

@@ -18,10 +18,15 @@
     "devchain": "aragon devchain",
     "devchain:reset": "aragon devchain --reset",
     "setDecision:local": "truffle exec ./scripts/setDecision.js --network rpc",
+    "setDecision:staging": "truffle exec ./scripts/setDecision.js --network rinkeby",
     "newDecision:local": "truffle exec ./scripts/newDecision.js --network rpc",
+    "newDecision:staging": "truffle exec ./scripts/newDecision.js --network rinkeby",
     "resolveMarkets:local": "truffle exec ./scripts/resolveMarkets.js --network rpc",
+    "resolveMarkets:staging": "truffle exec ./scripts/resolveMarkets.js --network rinkeby",
     "decisionReport:local": "truffle exec ./scripts/decisionReport.js --network rpc",
-    "oracleManagerReport:local": "truffle exec ./scripts/oracleManagerReport.js --network rpc"
+    "decisionReport:staging": "truffle exec ./scripts/decisionReport.js --network rinkeby",
+    "oracleManagerReport:local": "truffle exec ./scripts/oracleManagerReport.js --network rpc",
+    "oracleManagerReport:staging": "truffle exec ./scripts/oracleManagerReport.js --network rinkeby"
   },
   "files": [
     "abi/",
