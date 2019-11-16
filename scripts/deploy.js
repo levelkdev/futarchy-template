@@ -17,7 +17,11 @@ module.exports = async (
   if (!this.web3) web3 = _web3
   if (!this.artifacts) artifacts = _artifacts
 
-  return deployTemplate(web3, artifacts, TEMPLATE_NAME, CONTRACT_NAME, _.concat(APPS, OPEN_APPS))
+  const network = process.argv[5]
+
+  let appConf = network == 'rpc' ? undefined : _.concat(APPS, OPEN_APPS)
+
+  return deployTemplate(web3, artifacts, TEMPLATE_NAME, CONTRACT_NAME, appConf)
     .then(template => {
       console.log(template.address)
       if (callback) {

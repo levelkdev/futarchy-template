@@ -1,0 +1,29 @@
+{
+  "futarchyTemplateAddress": "0xb52b85b51dd2c50ceef135c03ac8a57e87cb999e",
+  "daoTokenName": "ANV5SignalingMarketDAOToken",
+  "daoTokenSymbol": "ANV5SMDT",
+  "daoTokenDistribution": [
+    { "holder": "0x33329f5a360649eb1c473b998cf3b975feb109f6", "amount": 1 },
+    { "holder": "0xb4124cEB3451635DAcedd11767f004d8a28c6eE7", "amount": 1 }
+  ],
+  "collateralTokenDistribution": [
+    { "holder": "0xb4124cEB3451635DAcedd11767f004d8a28c6eE7", "amount": 1000 },
+    { "holder": "0x33329f5a360649eb1c473b998cf3b975feb109f6", "amount": 1000 },
+    { "holder": "0x44360017c1460BC0149946b4fad97665c25586b0", "amount": 1000 }
+  ],
+  "medianPriceOracleTimeframe": 60,
+  "votingSettings": {
+    "voteDuration": 604800,
+    "supportRequired": 0.01,
+    "minimumAcceptanceQuorum": 0.01
+  },
+  "futarchySettings": {
+    "fee": 0,
+    "tradingPeriod": 1,
+    "timeToPriceResolution": 600,
+    "marketFundAmount": 100
+  },
+  "oracleManagerSettings": {
+    "dataFeedSources": [ "0x00f1df0df72ec9220b921f907b3d5b631fff5785" ]
+  }
+}
