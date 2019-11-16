@@ -24,11 +24,17 @@ If the apps are not showing up in the DAO, the front-end code might not be propa
 
 ## Local Deploy
 
+Copy `config.default.json` to `config.local.json`.
+
 pull the [aragon/aragon](https://github.com/aragon/aragon) repo locally (the aragon front-end). Checkout latest release (currently [0.8.0-hotifx](https://github.com/aragon/aragon/releases/tag/0.8.0-hotifx)). Run `npm install`.
 
 run `npm run compile`
 
-run `npm run devchain:reset`
+run `npm run devchain:reset` and clear application cache for `localhost:3000` (Aragon client)
+
+deploy `github.com/levelkdev/token-price-oracles`
+  * `npm run deploy:local`
+  * Copy the `tokenPriceDataFeed` address to the `oracleManagerSettings.dataFeedSources` array
 
 deploy `github.com/levelkdev/futarchy-app`:
   * `npm run deploy:lib_workaround:local`
@@ -40,9 +46,13 @@ deploy `github.com/levelkdev/oracle-manager-app`:
 
 run `npm run deploy:rpc` to deploy the template to the local devchain
 
-run `npm run newFutarchyDAO:local` to deploy a futarchy DAO to the local devchain
+Copy the deployed template address to `"futarchyTemplateAddress"` in `config.local.json`
+
+run `npm run newFutarchyDAO:local` to deploy a futarchy DAO to the local devchain. Save the DAO address that is output in the event logs.
 
 from the `aragon/aragon` repo, run `npm run start:local`
+
+go to `localhost:3000/#/<DAO_ADDRESS>`
 
 ### Set Decision
 

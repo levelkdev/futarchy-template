@@ -1,19 +1,28 @@
 const fs = require('fs')
 
 const tryDeployToNetwork = async (network, contractArtifact, contractName, params = []) => {
-  const deployConfig = readDeployConfig(network)
   let contractInstance
-  const deployedAddress = deployConfig.dependencyContracts[contractName]
-  if (!deployedAddress) {
-    console.log(`Deploying ${contractName}...`)
-    contractInstance = await contractArtifact.new.apply(null, params)
-    console.log(`Deployed ${contractName}: ${contractInstance.address}`)
-    deployConfig.dependencyContracts[contractName] = contractInstance.address
-    writeDeployConfig(network, deployConfig)
+  if (network == 'rpc') {
+    contractInstance = await deployContract(contractArtifact, contractName, params) 
   } else {
-    contractInstance = await contractArtifact.at(deployedAddress)
-    console.log(`${contractName} already deployed: ${deployedAddress}`)
+    const deployConfig = readDeployConfig(network)
+    const deployedAddress = deployConfig.dependencyContracts[contractName]
+    if (!deployedAddress) {
+      contractInstance = await deployContract(contractArtifact, contractName, params)
+      deployConfig.dependencyContracts[contractName] = contractInstance.address
+      writeDeployConfig(network, deployConfig)
+    } else {
+      contractInstance = await contractArtifact.at(deployedAddress)
+      console.log(`${contractName} already deployed: ${deployedAddress}`)
+    }
   }
+  return contractInstance
+}
+
+async function deployContract(contractArtifact, contractName, params) {
+  console.log(`Deploying ${contractName}...`)
+  const contractInstance = await contractArtifact.new.apply(null, params)
+  console.log(`Deployed ${contractName}: ${contractInstance.address}`)
   return contractInstance
 }
 

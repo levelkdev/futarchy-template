@@ -1,65 +1,8 @@
+const _ = require('lodash')
+const readConfig = require('../src/readConfig')
 const tryDeployToNetwork = require('../src/tryDeployToNetwork')
 const { randomId } = require('dao-templates/shared/helpers/aragonId')
 const { numberToBytes32, addressToBytes32 } = require('../src/utils')
-
-// via `npm run publish:staging` APM publish to `futarchy-template.open.aragonpm.eth`
-// const futarchyTemplateAddress = '0xc6A943c51667c09BB9a5D0d058F1eF0eD153fB47'
-
-// via `npm run deploy:staging`
-const futarchyTemplateAddress = '0xb52b85b51dd2c50ceef135c03ac8a57e87cb999e'
-
-const daoTokenHolder1 = '0x33329f5a360649eb1c473b998cf3b975feb109f6'
-const daoTokenHolder2 = '0xb4124cEB3451635DAcedd11767f004d8a28c6eE7'
-
-const HOLDERS = [daoTokenHolder1, daoTokenHolder2]
-
-const COLLATERAL_TOKEN_MINT_AMOUNT = 10000 * 1e18
-
-// DAO native tokens (ANV5SMDT):
-const STAKES = HOLDERS.map(() => 1 * 1e18)
-
-// Collateral tokens (ANV5SMCT)
-const AIRDROP_ADDRESSES = [
-  '0xb4124cEB3451635DAcedd11767f004d8a28c6eE7',
-  '0x33329f5a360649eb1c473b998cf3b975feb109f6',
-  '0x44360017c1460BC0149946b4fad97665c25586b0'
-]
-
-const AIRDROP_AMOUNTS = [
-  COLLATERAL_TOKEN_MINT_AMOUNT,
-  COLLATERAL_TOKEN_MINT_AMOUNT,
-  COLLATERAL_TOKEN_MINT_AMOUNT
-]
-
-const TOKEN_NAME = 'ANV5SignalingMarketDAOToken'
-const TOKEN_SYMBOL = 'ANV5SMDT'
-
-const ONE_MINUTE = 60
-const ONE_HOUR = ONE_MINUTE * 60
-const ONE_DAY = ONE_HOUR * 24
-const ONE_WEEK = ONE_DAY * 7
-
-const VOTE_DURATION = ONE_WEEK
-const SUPPORT_REQUIRED = 1e16
-const MIN_ACCEPTANCE_QUORUM = 1e16
-const VOTING_SETTINGS = [SUPPORT_REQUIRED, MIN_ACCEPTANCE_QUORUM, VOTE_DURATION]
-const FUTARCHY_FEE = 0
-
-// setting to 1 so decisionResolutionDate is immediately passed,
-// allowing us to set the decision at any time
-const FUTARCHY_TRADING_PERIOD = 1
-
-// setting to 10 minutes total market time
-const FUTARCHY_TIME_TO_PRICE_RESOLUTION = ONE_MINUTE * 10
-
-const FUTARCHY_MARKET_FUND_AMOUNT = 100 * 1e18
-
-const ORACLE_MANAGER_DATA_FEED_SOURCES = [
-   // deployed with token-price-oracles: `npm run createPriceFeed:rinkeby MKR DAI`
-  '0x00f1df0df72ec9220b921f907b3d5b631fff5785' // MKR/DAI Uniswap rinkeby price feed
-]
-
-const MEDIAN_PRICE_ORACLE_TIMEFRAME = ONE_MINUTE
 
 module.exports = async (
   callback,
@@ -74,6 +17,8 @@ module.exports = async (
     if (!this.web3) web3 = _web3
     if (!this.artifacts) artifacts = _artifacts
 
+    const config = readConfig(network)
+
     const FutarchyTemplate = artifacts.require('FutarchyTemplate')
     const ANV5SignalingMarketCollateralToken = artifacts.require('ANV5SignalingMarketCollateralToken')
     const Fixed192x64Math = artifacts.require('Fixed192x64Math')
@@ -87,7 +32,7 @@ module.exports = async (
     const StandardMarketWithPriceLoggerFactory = artifacts.require('StandardMarketWithPriceLoggerFactory')
     const DecisionMarketsFactory = artifacts.require('DecisionMarketsFactory')
 
-    const futarchyTemplate = await FutarchyTemplate.at(futarchyTemplateAddress)
+    const futarchyTemplate = await FutarchyTemplate.at(config.futarchyTemplateAddress)
 
     const fixed192x64Math = await tryDeploy(Fixed192x64Math, 'Fixed192x64Math')
 
@@ -133,22 +78,36 @@ module.exports = async (
       ]
     )
 
+    const collateralTokenHolders = _.map(config.collateralTokenDistribution, 'holder')
+    const collateralTokenAmounts = _.map(config.collateralTokenDistribution, (distData) => {
+      return distData.amount * 1e18
+    })
+
+    console.log('Deploying collateral token and distributing: ', config.collateralTokenDistribution)
+    console.log()
+
     const anv5SignalingMarketCollateralToken = await tryDeploy(
       ANV5SignalingMarketCollateralToken,
       'ANV5SignalingMarketCollateralToken',
       [
-        AIRDROP_ADDRESSES,
-        AIRDROP_AMOUNTS
+        collateralTokenHolders,
+        collateralTokenAmounts
       ]
     )
 
     console.log()
 
-    const FUTARCHY_SETTINGS = [
-      numberToBytes32(FUTARCHY_FEE),
-      numberToBytes32(FUTARCHY_TRADING_PERIOD),
-      numberToBytes32(FUTARCHY_TIME_TO_PRICE_RESOLUTION),
-      numberToBytes32(FUTARCHY_MARKET_FUND_AMOUNT),
+    const votingSettings = [
+      config.votingSettings.supportRequired * 1e18,
+      config.votingSettings.minimumAcceptanceQuorum * 1e18,
+      config.votingSettings.voteDuration
+    ]
+
+    const futarchySettings = [
+      numberToBytes32(config.futarchySettings.fee * 1e18),
+      numberToBytes32(config.futarchySettings.tradingPeriod),
+      numberToBytes32(config.futarchySettings.timeToPriceResolution),
+      numberToBytes32(config.futarchySettings.marketFundAmount * 1e18),
       addressToBytes32(anv5SignalingMarketCollateralToken.address),
       addressToBytes32(decisionMarketsFactory.address),
       addressToBytes32(lmsrMarketMaker.address)
@@ -157,8 +116,8 @@ module.exports = async (
     const daoID = randomId()
 
     const newTokenTxReceipt = await futarchyTemplate.newToken(
-      TOKEN_NAME,
-      TOKEN_SYMBOL
+      config.daoTokenName,
+      config.daoTokenSymbol
     )
 
     console.log('Deployed FutarchyDAO token:')
@@ -166,14 +125,22 @@ module.exports = async (
     console.log('  newTokenTxReceipt.logs: ', newTokenTxReceipt.logs)
     console.log()
 
+    const daoTokenHolders = _.map(config.daoTokenDistribution, 'holder')
+    const daoTokenAmounts = _.map(config.daoTokenDistribution, (distData) => {
+      return distData.amount * 1e18
+    })
+
+    console.log('Deploying DAO instance and distributing DAO token: ', config.daoTokenDistribution)
+    console.log()
+
     const newInstanceTxReceipt = await futarchyTemplate.newInstance(
       daoID,
-      HOLDERS,
-      STAKES,
-      VOTING_SETTINGS,
-      FUTARCHY_SETTINGS,
-      ORACLE_MANAGER_DATA_FEED_SOURCES,
-      MEDIAN_PRICE_ORACLE_TIMEFRAME
+      daoTokenHolders,
+      daoTokenAmounts,
+      votingSettings,
+      futarchySettings,
+      config.oracleManagerSettings.dataFeedSources,
+      config.medianPriceOracleTimeframe
     )
 
     console.log('Deployed FutarchDAO instance:')
@@ -187,7 +154,7 @@ module.exports = async (
       return receipt
     }
   } catch (err) {
-    console.log('Error in scripts/newFutarchyDAOStaging.js: ', err)
+    console.log('Error in scripts/newFutarchyDAO.js: ', err)
   }
 
   async function tryDeploy (contractArtifact, contractName, params = []) {

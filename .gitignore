@@ -7,3 +7,4 @@ flattened_contracts
 secrets.json
 arapp_local.json
 abi
+config.local.json
