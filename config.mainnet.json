@@ -33,7 +33,7 @@
     "fee": 0,
     "tradingPeriod": 1,
     "timeToPriceResolution": 3628800,
-    "marketFundAmount": 100
+    "marketFundAmount": 20000
   },
   "oracleManagerSettings": {
     "dataFeedSources": [ "0xea6927256b03e852fae6fd72e72f66fa862d7640" ]
