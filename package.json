@@ -9,6 +9,7 @@
     "compile": "truffle compile --all",
     "newFutarchyDAO:local": "truffle exec ./scripts/newFutarchyDAO.js --network rpc",
     "newFutarchyDAO:staging": "truffle exec ./scripts/newFutarchyDAO.js --network rinkeby",
+    "newFutarchyDAO:mainnet": "truffle exec ./scripts/newFutarchyDAO.js --network mainnet",
     "publish:staging": "aragon apm publish major --environment staging --init 0xbca2c99aa7018edcde60e6c5744f68003112535d @ARAGON_ENS 0xac443f983c38c02149ce2ffcff8b7de90dccf77c 0x3665e7bfd4d3254ae7796779800f5b603c43c60d",
     "publish:mainnet": "aragon apm publish major --environment mainnet --init 0xb9da44c051c6cc9e04b7e0f95e95d69c6a6d8031 @ARAGON_ENS 0x909d05f384d0663ed4be59863815ab43b4f347ec 0x546aa2eae2514494eeadb7bbb35243348983c59d",
     "deploy:staging": "npm run compile && truffle exec ./scripts/deploy.js --network rinkeby --ens 0x98df287b6c145399aaa709692c8d308357bc085d --dao-factory 0xbca2c99aa7018edcde60e6c5744f68003112535d --mini-me-factory 0xac443f983c38c02149ce2ffcff8b7de90dccf77c --verbose",
@@ -21,14 +22,19 @@
     "devchain:reset": "aragon devchain --reset",
     "setDecision:local": "truffle exec ./scripts/setDecision.js --network rpc",
     "setDecision:staging": "truffle exec ./scripts/setDecision.js --network rinkeby",
+    "setDecision:mainnet": "truffle exec ./scripts/setDecision.js --network mainnet",
     "newDecision:local": "truffle exec ./scripts/newDecision.js --network rpc",
     "newDecision:staging": "truffle exec ./scripts/newDecision.js --network rinkeby",
+    "newDecision:mainnet": "truffle exec ./scripts/newDecision.js --network mainnet",
     "resolveMarkets:local": "truffle exec ./scripts/resolveMarkets.js --network rpc",
     "resolveMarkets:staging": "truffle exec ./scripts/resolveMarkets.js --network rinkeby",
+    "resolveMarkets:mainnet": "truffle exec ./scripts/resolveMarkets.js --network mainnet",
     "decisionReport:local": "truffle exec ./scripts/decisionReport.js --network rpc",
     "decisionReport:staging": "truffle exec ./scripts/decisionReport.js --network rinkeby",
+    "decisionReport:mainnet": "truffle exec ./scripts/decisionReport.js --network mainnet",
     "oracleManagerReport:local": "truffle exec ./scripts/oracleManagerReport.js --network rpc",
-    "oracleManagerReport:staging": "truffle exec ./scripts/oracleManagerReport.js --network rinkeby"
+    "oracleManagerReport:staging": "truffle exec ./scripts/oracleManagerReport.js --network rinkeby",
+    "oracleManagerReport:mainnet": "truffle exec ./scripts/oracleManagerReport.js --network mainnet"
   },
   "files": [
     "abi/",
