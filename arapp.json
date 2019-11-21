@@ -5,11 +5,22 @@
       "network": "rpc",
       "registry": "0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1"
     },
+    "local": {
+      "network": "rpc",
+      "appName": "futarchy-template.open.aragonpm.eth",
+      "registry": "0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1"
+    },
     "staging": {
       "appName": "futarchy-template.open.aragonpm.eth",
       "network": "rinkeby",
       "registry": "0x98df287b6c145399aaa709692c8d308357bc085d",
       "wsRPC": "wss://rinkeby.eth.aragon.network/ws"
+    },
+    "mainnet": {
+      "appName": "futarchy-template.aragonpm.eth",
+      "address": "0xeed831f3524e9b954ae148fa5c15d5e91e16ad94",
+      "network": "mainnet",
+      "registry": "0x314159265dd8dbb310642f98f50c066173c1259b"
     }
   },
   "roles": [],
