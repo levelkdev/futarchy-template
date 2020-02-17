@@ -1,6 +1,6 @@
 pragma solidity 0.4.24;
 
-import "@gnosis.pm/pm-contracts/contracts/Tokens/ERC20Gnosis.sol";
+import "@levelk/pm-contracts/contracts/Tokens/ERC20Gnosis.sol";
 
 contract LocalToken is ERC20Gnosis {
 

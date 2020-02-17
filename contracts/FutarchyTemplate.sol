@@ -1,8 +1,8 @@
 pragma solidity 0.4.24;
 
-import "futarchy-app/contracts/Futarchy.sol";
-import "futarchy-app/contracts/Oracles/MedianPriceOracleFactory.sol";
-import "oracle-manager-app/contracts/OracleManager.sol";
+import "@levelk/futarchy-app/contracts/Futarchy.sol";
+import "@levelk/futarchy-app/contracts/Oracles/MedianPriceOracleFactory.sol";
+import "@levelk/oracle-manager-app/contracts/OracleManager.sol";
 import "@aragon/templates-shared/contracts/TokenCache.sol";
 import "@aragon/templates-shared/contracts/BaseTemplate.sol";
 
