@@ -1,6 +1,6 @@
 {
   "name": "@levelk/futarchy-template",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Template for futarchy DAOs",
   "main": "index.js",
   "scripts": {
