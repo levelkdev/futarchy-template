@@ -1,6 +1,6 @@
 {
-  "name": "futarchy-template",
-  "version": "1.0.0",
+  "name": "@levelk/futarchy-template",
+  "version": "0.1.0",
   "description": "Template for futarchy DAOs",
   "main": "index.js",
   "scripts": {
@@ -45,7 +45,7 @@
     "test/"
   ],
   "author": "Level K",
-  "license": "GPL-3.0-or-later",
+  "license": "MIT",
   "devDependencies": {
     "@aragon/test-helpers": "^2.0.0",
     "babel-polyfill": "^6.26.0",
@@ -75,5 +75,17 @@
     "dao-templates": "github:levelkdev/dao-templates#0689784662997787cf695042f2968032a30ef765",
     "@levelk/futarchy-app": "0.1.5",
     "@levelk/oracle-manager-app": "0.1.2"
-  }
+  },
+  "files": [
+    "build",
+    "contracts"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/levelkdev/futarchy-template.git"
+  },
+  "bugs": {
+    "url": "https://github.com/levelkdev/futarchy-template/issues"
+  },
+  "homepage": "https://github.com/levelkdev/futarchy-template#readme"
 }
